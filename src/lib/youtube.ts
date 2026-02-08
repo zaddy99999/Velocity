@@ -124,17 +124,33 @@ export async function scrapeYouTubeChannel(url: string): Promise<YouTubeData> {
     if (dataMatch) {
       try {
         const data = JSON.parse(dataMatch[1]);
+        const fullJsonStr = JSON.stringify(data);
 
-        // Navigate the data structure to find subscriber count
+        // Try the old c4TabbedHeaderRenderer format first
         const header = data?.header?.c4TabbedHeaderRenderer;
         if (header) {
-          // Subscriber count
           const subText = header.subscriberCountText?.simpleText ||
                           header.subscriberCountText?.runs?.[0]?.text || '';
           result.subscribers = parseCount(subText.replace(/subscribers?/i, ''));
         }
 
-        // Look for about page data (views and video count)
+        // New format: search for subscriberCountText as a direct string in the JSON
+        if (result.subscribers === null) {
+          const subMatch = fullJsonStr.match(/"subscriberCountText":"([^"]+)"/);
+          if (subMatch) {
+            result.subscribers = parseCount(subMatch[1].replace(/subscribers?/i, ''));
+          }
+        }
+
+        // Search for viewCountText
+        if (result.totalViews === null) {
+          const viewMatch = fullJsonStr.match(/"viewCountText":"([^"]+)"/);
+          if (viewMatch) {
+            result.totalViews = parseCount(viewMatch[1].replace(/views?/i, ''));
+          }
+        }
+
+        // Look for about page data (views and video count) - old format
         const tabs = data?.contents?.twoColumnBrowseResultsRenderer?.tabs || [];
         for (const tab of tabs) {
           const tabRenderer = tab.tabRenderer;
@@ -143,13 +159,14 @@ export async function scrapeYouTubeChannel(url: string): Promise<YouTubeData> {
               ?.itemSectionRenderer?.contents?.[0]?.channelAboutFullMetadataRenderer;
 
             if (content) {
-              // Total views
-              const viewsText = content.viewCountText?.simpleText || '';
-              result.totalViews = parseCount(viewsText.replace(/views?/i, ''));
-
-              // Video count (might be in different location)
-              const videoCountText = content.videoCountText?.simpleText || '';
-              result.videoCount = parseCount(videoCountText.replace(/videos?/i, ''));
+              if (result.totalViews === null) {
+                const viewsText = content.viewCountText?.simpleText || '';
+                result.totalViews = parseCount(viewsText.replace(/views?/i, ''));
+              }
+              if (result.videoCount === null) {
+                const videoCountText = content.videoCountText?.simpleText || '';
+                result.videoCount = parseCount(videoCountText.replace(/videos?/i, ''));
+              }
             }
           }
         }
@@ -159,6 +176,14 @@ export async function scrapeYouTubeChannel(url: string): Promise<YouTubeData> {
           const videoText = header.videosCountText.runs?.[0]?.text ||
                            header.videosCountText.simpleText || '';
           result.videoCount = parseCount(videoText);
+        }
+
+        // Search for video count in JSON
+        if (result.videoCount === null) {
+          const videoMatch = fullJsonStr.match(/"videosCountText"[^}]*"text":"([^"]+)"/);
+          if (videoMatch) {
+            result.videoCount = parseCount(videoMatch[1].replace(/videos?/i, ''));
+          }
         }
 
       } catch (parseError) {
