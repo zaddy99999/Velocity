@@ -742,7 +742,7 @@ export function DailyGrowthChart({ channels, scaleType = 'linear', timePeriod = 
   );
 }
 
-export function TikTokFollowersChart({ channels, count = 15 }: { channels: ChannelDisplayData[]; count?: number }) {
+export function TikTokFollowersChart({ channels, count = 15, scaleType = 'sqrt' }: { channels: ChannelDisplayData[]; count?: number; scaleType?: 'linear' | 'sqrt' | 'log' }) {
   const chartRef = useRef<HTMLDivElement>(null);
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copying' | 'copied' | 'error'>('idle');
 
@@ -760,15 +760,27 @@ export function TikTokFollowersChart({ channels, count = 15 }: { channels: Chann
     .filter((ch) => ch.tiktokFollowers && ch.tiktokFollowers > 0)
     .sort((a, b) => (b.tiktokFollowers || 0) - (a.tiktokFollowers || 0))
     .slice(0, count)
-    .map((ch) => ({
-      name: `${ch.channelName}|||${ch.logoUrl || ''}|||${ch.tiktokUrl || ''}`,
-      fullName: ch.channelName,
-      followers: ch.tiktokFollowers || 0,
-      sqrtFollowers: Math.sqrt(ch.tiktokFollowers || 0),
-      logoUrl: ch.logoUrl,
-      tiktokUrl: ch.tiktokUrl,
-      viralityScore: viralityScores.get(ch.channelUrl),
-    }));
+    .map((ch) => {
+      const followers = ch.tiktokFollowers || 0;
+      return {
+        name: `${ch.channelName}|||${ch.logoUrl || ''}|||${ch.tiktokUrl || ''}`,
+        fullName: ch.channelName,
+        followers,
+        sqrtFollowers: Math.sqrt(followers),
+        logFollowers: followers > 0 ? Math.log10(followers) : 0,
+        logoUrl: ch.logoUrl,
+        tiktokUrl: ch.tiktokUrl,
+        viralityScore: viralityScores.get(ch.channelUrl),
+      };
+    });
+
+  const getDataKey = () => {
+    switch (scaleType) {
+      case 'sqrt': return 'sqrtFollowers';
+      case 'log': return 'logFollowers';
+      default: return 'followers';
+    }
+  };
 
   if (data.length === 0) {
     return (
@@ -813,7 +825,7 @@ export function TikTokFollowersChart({ channels, count = 15 }: { channels: Chann
             />
             <Tooltip content={<CustomTooltip />} cursor={false} />
             <Bar
-              dataKey="sqrtFollowers"
+              dataKey={getDataKey()}
               radius={[4, 4, 0, 0]}
               maxBarSize={50}
               onClick={(data) => {
@@ -823,7 +835,7 @@ export function TikTokFollowersChart({ channels, count = 15 }: { channels: Chann
               }}
               style={{ cursor: 'pointer' }}
             >
-              <LabelList dataKey="sqrtFollowers" content={renderLabel} />
+              <LabelList dataKey={getDataKey()} content={renderLabel} />
               {data.map((_, index) => (
                 <Cell
                   key={index}
@@ -851,7 +863,7 @@ export function TikTokFollowersChart({ channels, count = 15 }: { channels: Chann
   );
 }
 
-export function TikTokLikesChart({ channels, count = 15 }: { channels: ChannelDisplayData[]; count?: number }) {
+export function TikTokLikesChart({ channels, count = 15, scaleType = 'sqrt' }: { channels: ChannelDisplayData[]; count?: number; scaleType?: 'linear' | 'sqrt' | 'log' }) {
   const chartRef = useRef<HTMLDivElement>(null);
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copying' | 'copied' | 'error'>('idle');
 
@@ -869,15 +881,27 @@ export function TikTokLikesChart({ channels, count = 15 }: { channels: ChannelDi
     .filter((ch) => ch.tiktokLikes && ch.tiktokLikes > 0)
     .sort((a, b) => (b.tiktokLikes || 0) - (a.tiktokLikes || 0))
     .slice(0, count)
-    .map((ch) => ({
-      name: `${ch.channelName}|||${ch.logoUrl || ''}|||${ch.tiktokUrl || ''}`,
-      fullName: ch.channelName,
-      likes: ch.tiktokLikes || 0,
-      sqrtLikes: Math.sqrt(ch.tiktokLikes || 0),
-      logoUrl: ch.logoUrl,
-      tiktokUrl: ch.tiktokUrl,
-      viralityScore: viralityScores.get(ch.channelUrl),
-    }));
+    .map((ch) => {
+      const likes = ch.tiktokLikes || 0;
+      return {
+        name: `${ch.channelName}|||${ch.logoUrl || ''}|||${ch.tiktokUrl || ''}`,
+        fullName: ch.channelName,
+        likes,
+        sqrtLikes: Math.sqrt(likes),
+        logLikes: likes > 0 ? Math.log10(likes) : 0,
+        logoUrl: ch.logoUrl,
+        tiktokUrl: ch.tiktokUrl,
+        viralityScore: viralityScores.get(ch.channelUrl),
+      };
+    });
+
+  const getDataKey = () => {
+    switch (scaleType) {
+      case 'sqrt': return 'sqrtLikes';
+      case 'log': return 'logLikes';
+      default: return 'likes';
+    }
+  };
 
   if (data.length === 0) {
     return (
@@ -922,7 +946,7 @@ export function TikTokLikesChart({ channels, count = 15 }: { channels: ChannelDi
             />
             <Tooltip content={<CustomTooltip />} cursor={false} />
             <Bar
-              dataKey="sqrtLikes"
+              dataKey={getDataKey()}
               radius={[4, 4, 0, 0]}
               maxBarSize={50}
               onClick={(data) => {
@@ -932,7 +956,7 @@ export function TikTokLikesChart({ channels, count = 15 }: { channels: ChannelDi
               }}
               style={{ cursor: 'pointer' }}
             >
-              <LabelList dataKey="sqrtLikes" content={renderLabel} />
+              <LabelList dataKey={getDataKey()} content={renderLabel} />
               {data.map((_, index) => (
                 <Cell
                   key={index}
@@ -960,7 +984,7 @@ export function TikTokLikesChart({ channels, count = 15 }: { channels: ChannelDi
   );
 }
 
-export function YouTubeSubscribersChart({ channels, count = 15 }: { channels: ChannelDisplayData[]; count?: number }) {
+export function YouTubeSubscribersChart({ channels, count = 15, scaleType = 'sqrt' }: { channels: ChannelDisplayData[]; count?: number; scaleType?: 'linear' | 'sqrt' | 'log' }) {
   const chartRef = useRef<HTMLDivElement>(null);
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copying' | 'copied' | 'error'>('idle');
 
@@ -977,15 +1001,27 @@ export function YouTubeSubscribersChart({ channels, count = 15 }: { channels: Ch
     .filter((ch) => ch.youtubeSubscribers && ch.youtubeSubscribers > 0)
     .sort((a, b) => (b.youtubeSubscribers || 0) - (a.youtubeSubscribers || 0))
     .slice(0, count)
-    .map((ch) => ({
-      name: `${ch.channelName}|||${ch.logoUrl || ''}|||${ch.youtubeUrl || ''}`,
-      fullName: ch.channelName,
-      subscribers: ch.youtubeSubscribers || 0,
-      sqrtSubscribers: Math.sqrt(ch.youtubeSubscribers || 0),
-      logoUrl: ch.logoUrl,
-      youtubeUrl: ch.youtubeUrl,
-      viralityScore: viralityScores.get(ch.channelUrl),
-    }));
+    .map((ch) => {
+      const subscribers = ch.youtubeSubscribers || 0;
+      return {
+        name: `${ch.channelName}|||${ch.logoUrl || ''}|||${ch.youtubeUrl || ''}`,
+        fullName: ch.channelName,
+        subscribers,
+        sqrtSubscribers: Math.sqrt(subscribers),
+        logSubscribers: subscribers > 0 ? Math.log10(subscribers) : 0,
+        logoUrl: ch.logoUrl,
+        youtubeUrl: ch.youtubeUrl,
+        viralityScore: viralityScores.get(ch.channelUrl),
+      };
+    });
+
+  const getDataKey = () => {
+    switch (scaleType) {
+      case 'sqrt': return 'sqrtSubscribers';
+      case 'log': return 'logSubscribers';
+      default: return 'subscribers';
+    }
+  };
 
   if (data.length === 0) {
     return (
@@ -1030,7 +1066,7 @@ export function YouTubeSubscribersChart({ channels, count = 15 }: { channels: Ch
             />
             <Tooltip content={<CustomTooltip />} cursor={false} />
             <Bar
-              dataKey="sqrtSubscribers"
+              dataKey={getDataKey()}
               radius={[4, 4, 0, 0]}
               maxBarSize={50}
               onClick={(data) => {
@@ -1040,7 +1076,7 @@ export function YouTubeSubscribersChart({ channels, count = 15 }: { channels: Ch
               }}
               style={{ cursor: 'pointer' }}
             >
-              <LabelList dataKey="sqrtSubscribers" content={renderLabel} />
+              <LabelList dataKey={getDataKey()} content={renderLabel} />
               {data.map((_, index) => (
                 <Cell
                   key={index}
@@ -1068,7 +1104,7 @@ export function YouTubeSubscribersChart({ channels, count = 15 }: { channels: Ch
   );
 }
 
-export function YouTubeViewsChart({ channels, count = 15 }: { channels: ChannelDisplayData[]; count?: number }) {
+export function YouTubeViewsChart({ channels, count = 15, scaleType = 'sqrt' }: { channels: ChannelDisplayData[]; count?: number; scaleType?: 'linear' | 'sqrt' | 'log' }) {
   const chartRef = useRef<HTMLDivElement>(null);
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copying' | 'copied' | 'error'>('idle');
 
@@ -1085,15 +1121,27 @@ export function YouTubeViewsChart({ channels, count = 15 }: { channels: ChannelD
     .filter((ch) => ch.youtubeViews && ch.youtubeViews > 0)
     .sort((a, b) => (b.youtubeViews || 0) - (a.youtubeViews || 0))
     .slice(0, count)
-    .map((ch) => ({
-      name: `${ch.channelName}|||${ch.logoUrl || ''}|||${ch.youtubeUrl || ''}`,
-      fullName: ch.channelName,
-      views: ch.youtubeViews || 0,
-      sqrtViews: Math.sqrt(ch.youtubeViews || 0),
-      logoUrl: ch.logoUrl,
-      youtubeUrl: ch.youtubeUrl,
-      viralityScore: viralityScores.get(ch.channelUrl),
-    }));
+    .map((ch) => {
+      const views = ch.youtubeViews || 0;
+      return {
+        name: `${ch.channelName}|||${ch.logoUrl || ''}|||${ch.youtubeUrl || ''}`,
+        fullName: ch.channelName,
+        views,
+        sqrtViews: Math.sqrt(views),
+        logViews: views > 0 ? Math.log10(views) : 0,
+        logoUrl: ch.logoUrl,
+        youtubeUrl: ch.youtubeUrl,
+        viralityScore: viralityScores.get(ch.channelUrl),
+      };
+    });
+
+  const getDataKey = () => {
+    switch (scaleType) {
+      case 'sqrt': return 'sqrtViews';
+      case 'log': return 'logViews';
+      default: return 'views';
+    }
+  };
 
   if (data.length === 0) {
     return (
@@ -1138,7 +1186,7 @@ export function YouTubeViewsChart({ channels, count = 15 }: { channels: ChannelD
             />
             <Tooltip content={<CustomTooltip />} cursor={false} />
             <Bar
-              dataKey="sqrtViews"
+              dataKey={getDataKey()}
               radius={[4, 4, 0, 0]}
               maxBarSize={50}
               onClick={(data) => {
@@ -1148,7 +1196,7 @@ export function YouTubeViewsChart({ channels, count = 15 }: { channels: ChannelD
               }}
               style={{ cursor: 'pointer' }}
             >
-              <LabelList dataKey="sqrtViews" content={renderLabel} />
+              <LabelList dataKey={getDataKey()} content={renderLabel} />
               {data.map((_, index) => (
                 <Cell
                   key={index}

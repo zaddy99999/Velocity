@@ -31,11 +31,13 @@ export default function Home() {
   const [tiktokChartCount, setTiktokChartCount] = useState<number>(15);
   const [tiktokMetric, setTiktokMetric] = useState<'followers' | 'likes'>('followers');
   const [tiktokTimePeriod, setTiktokTimePeriod] = useState<'daily' | 'weekly' | 'monthly' | 'yearly' | 'alltime'>('alltime');
+  const [tiktokScaleType, setTiktokScaleType] = useState<'linear' | 'sqrt' | 'log'>('sqrt');
 
   // YouTube chart state
   const [youtubeCategory, setYoutubeCategory] = useState<'all' | 'web2' | 'web3' | 'abstract'>('web3');
   const [youtubeChartCount, setYoutubeChartCount] = useState<number>(15);
   const [youtubeMetric, setYoutubeMetric] = useState<'subscribers' | 'views'>('subscribers');
+  const [youtubeScaleType, setYoutubeScaleType] = useState<'linear' | 'sqrt' | 'log'>('sqrt');
 
   // Table filter state
   const [tableCategory, setTableCategory] = useState<'all' | 'web2' | 'web3' | 'abstract'>('all');
@@ -415,6 +417,17 @@ export default function Home() {
                   <option value="yearly" disabled>Yearly (Coming Soon)</option>
                 </select>
 
+                <span className="filter-label" style={{ marginLeft: '1.5rem' }}>Scale</span>
+                <select
+                  className="filter-select"
+                  value={tiktokScaleType}
+                  onChange={(e) => setTiktokScaleType(e.target.value as 'linear' | 'sqrt' | 'log')}
+                >
+                  <option value="linear">Linear</option>
+                  <option value="sqrt">Sqrt</option>
+                  <option value="log">Log</option>
+                </select>
+
                 <span className="filter-label" style={{ marginLeft: '1.5rem' }}>Show</span>
                 <select
                   className="filter-select"
@@ -448,9 +461,9 @@ export default function Home() {
               </div>
               <div className="chart-container">
                 {tiktokMetric === 'followers' ? (
-                  <TikTokFollowersChart channels={tiktokFilteredChannels} count={tiktokChartCount} />
+                  <TikTokFollowersChart channels={tiktokFilteredChannels} count={tiktokChartCount} scaleType={tiktokScaleType} />
                 ) : (
-                  <TikTokLikesChart channels={tiktokFilteredChannels} count={tiktokChartCount} />
+                  <TikTokLikesChart channels={tiktokFilteredChannels} count={tiktokChartCount} scaleType={tiktokScaleType} />
                 )}
               </div>
             </>
@@ -470,6 +483,17 @@ export default function Home() {
                   <option value="web2">Web2</option>
                   <option value="web3">Web3</option>
                   <option value="abstract">Abstract Only</option>
+                </select>
+
+                <span className="filter-label" style={{ marginLeft: '1.5rem' }}>Scale</span>
+                <select
+                  className="filter-select"
+                  value={youtubeScaleType}
+                  onChange={(e) => setYoutubeScaleType(e.target.value as 'linear' | 'sqrt' | 'log')}
+                >
+                  <option value="linear">Linear</option>
+                  <option value="sqrt">Sqrt</option>
+                  <option value="log">Log</option>
                 </select>
 
                 <span className="filter-label" style={{ marginLeft: '1.5rem' }}>Show</span>
@@ -505,9 +529,9 @@ export default function Home() {
               </div>
               <div className="chart-container">
                 {youtubeMetric === 'subscribers' ? (
-                  <YouTubeSubscribersChart channels={youtubeFilteredChannels} count={youtubeChartCount} />
+                  <YouTubeSubscribersChart channels={youtubeFilteredChannels} count={youtubeChartCount} scaleType={youtubeScaleType} />
                 ) : (
-                  <YouTubeViewsChart channels={youtubeFilteredChannels} count={youtubeChartCount} />
+                  <YouTubeViewsChart channels={youtubeFilteredChannels} count={youtubeChartCount} scaleType={youtubeScaleType} />
                 )}
               </div>
             </>
