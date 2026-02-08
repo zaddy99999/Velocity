@@ -290,6 +290,39 @@ h2 {
   color: #fff;
 }
 
+/* Toggle group */
+.toggle-group {
+  display: inline-flex;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.toggle-btn {
+  padding: 0.4rem 0.9rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: #888;
+  transition: all 0.2s ease;
+}
+
+.toggle-btn:not(:last-child) {
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.toggle-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.toggle-btn.active {
+  background: #fff;
+  color: #000;
+}
+
 /* Grid layout */
 .grid {
   display: grid;

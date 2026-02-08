@@ -402,14 +402,20 @@ export default function Home() {
                 </select>
 
                 <span className="filter-label" style={{ marginLeft: '1.5rem' }}>Metric</span>
-                <select
-                  className="filter-select"
-                  value={tiktokMetric}
-                  onChange={(e) => setTiktokMetric(e.target.value as 'followers' | 'likes')}
-                >
-                  <option value="followers">Followers</option>
-                  <option value="likes">Likes</option>
-                </select>
+                <div className="toggle-group">
+                  <button
+                    className={`toggle-btn ${tiktokMetric === 'followers' ? 'active' : ''}`}
+                    onClick={() => setTiktokMetric('followers')}
+                  >
+                    Followers
+                  </button>
+                  <button
+                    className={`toggle-btn ${tiktokMetric === 'likes' ? 'active' : ''}`}
+                    onClick={() => setTiktokMetric('likes')}
+                  >
+                    Likes
+                  </button>
+                </div>
 
                 <span className="filter-label" style={{ marginLeft: '1.5rem' }}>Show</span>
                 <select
@@ -453,14 +459,20 @@ export default function Home() {
                 </select>
 
                 <span className="filter-label" style={{ marginLeft: '1.5rem' }}>Metric</span>
-                <select
-                  className="filter-select"
-                  value={youtubeMetric}
-                  onChange={(e) => setYoutubeMetric(e.target.value as 'subscribers' | 'views')}
-                >
-                  <option value="subscribers">Subscribers</option>
-                  <option value="views">Total Views</option>
-                </select>
+                <div className="toggle-group">
+                  <button
+                    className={`toggle-btn ${youtubeMetric === 'subscribers' ? 'active' : ''}`}
+                    onClick={() => setYoutubeMetric('subscribers')}
+                  >
+                    Subscribers
+                  </button>
+                  <button
+                    className={`toggle-btn ${youtubeMetric === 'views' ? 'active' : ''}`}
+                    onClick={() => setYoutubeMetric('views')}
+                  >
+                    Views
+                  </button>
+                </div>
 
                 <span className="filter-label" style={{ marginLeft: '1.5rem' }}>Show</span>
                 <select
