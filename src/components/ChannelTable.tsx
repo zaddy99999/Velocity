@@ -8,7 +8,7 @@ interface Props {
   channels: ChannelDisplayData[];
 }
 
-type SortField = 'rank' | 'channelName' | 'category' | 'totalViews' | 'delta1d' | 'avg7dDelta' | 'tiktokFollowers' | 'tiktokLikes' | 'viralityScore';
+type SortField = 'rank' | 'channelName' | 'category' | 'totalViews' | 'delta1d' | 'avg7dDelta' | 'tiktokFollowers' | 'tiktokLikes' | 'youtubeSubscribers' | 'youtubeViews' | 'viralityScore';
 type SortDirection = 'asc' | 'desc';
 
 function formatNumber(num: number): string {
@@ -84,6 +84,12 @@ export default function ChannelTable({ channels }: Props) {
       case 'tiktokLikes':
         comparison = (a.tiktokLikes || 0) - (b.tiktokLikes || 0);
         break;
+      case 'youtubeSubscribers':
+        comparison = (a.youtubeSubscribers || 0) - (b.youtubeSubscribers || 0);
+        break;
+      case 'youtubeViews':
+        comparison = (a.youtubeViews || 0) - (b.youtubeViews || 0);
+        break;
       case 'viralityScore':
         const scoreA = viralityScores.get(a.channelUrl)?.score || 0;
         const scoreB = viralityScores.get(b.channelUrl)?.score || 0;
@@ -129,6 +135,12 @@ export default function ChannelTable({ channels }: Props) {
             </th>
             <th onClick={() => handleSort('tiktokLikes')} className="sortable">
               TikTok Likes <SortIcon field="tiktokLikes" />
+            </th>
+            <th onClick={() => handleSort('youtubeSubscribers')} className="sortable">
+              YT Subs <SortIcon field="youtubeSubscribers" />
+            </th>
+            <th onClick={() => handleSort('youtubeViews')} className="sortable">
+              YT Views <SortIcon field="youtubeViews" />
             </th>
             <th onClick={() => handleSort('viralityScore')} className="sortable">
               Virality <SortIcon field="viralityScore" />
@@ -189,6 +201,12 @@ export default function ChannelTable({ channels }: Props) {
               </td>
               <td className="number">
                 {channel.tiktokLikes ? formatNumber(channel.tiktokLikes) : '-'}
+              </td>
+              <td className="number">
+                {channel.youtubeSubscribers ? formatNumber(channel.youtubeSubscribers) : '-'}
+              </td>
+              <td className="number">
+                {channel.youtubeViews ? formatNumber(channel.youtubeViews) : '-'}
               </td>
               <td>
                 {(() => {

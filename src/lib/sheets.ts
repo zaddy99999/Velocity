@@ -200,6 +200,10 @@ export async function updateMetricsTab(channels: ScrapedChannel[]): Promise<void
       'tiktok_url',
       'tiktok_followers',
       'tiktok_likes',
+      'youtube_url',
+      'youtube_subscribers',
+      'youtube_views',
+      'youtube_video_count',
     ],
   ];
 
@@ -263,13 +267,17 @@ export async function updateMetricsTab(channels: ScrapedChannel[]): Promise<void
       ch.tiktokUrl || '',
       ch.tiktokFollowers !== null && ch.tiktokFollowers !== undefined ? String(ch.tiktokFollowers) : '',
       ch.tiktokLikes !== null && ch.tiktokLikes !== undefined ? String(ch.tiktokLikes) : '',
+      ch.youtubeUrl || '',
+      ch.youtubeSubscribers !== null && ch.youtubeSubscribers !== undefined ? String(ch.youtubeSubscribers) : '',
+      ch.youtubeViews !== null && ch.youtubeViews !== undefined ? String(ch.youtubeViews) : '',
+      ch.youtubeVideoCount !== null && ch.youtubeVideoCount !== undefined ? String(ch.youtubeVideoCount) : '',
     ]);
   }
 
   // Clear and rewrite metrics
   await sheets.spreadsheets.values.clear({
     spreadsheetId,
-    range: `${TABS.METRICS}!A:N`,
+    range: `${TABS.METRICS}!A:R`,
   });
 
   await sheets.spreadsheets.values.update({
@@ -289,7 +297,7 @@ export async function getLatestData(): Promise<ChannelDisplayData[]> {
   try {
     const metricsResponse = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: `${TABS.METRICS}!A:N`,
+      range: `${TABS.METRICS}!A:R`,
     });
 
     const rows = metricsResponse.data.values || [];
@@ -309,6 +317,10 @@ export async function getLatestData(): Promise<ChannelDisplayData[]> {
       tiktokUrl: row[11] || undefined,
       tiktokFollowers: row[12] ? parseInt(row[12], 10) : null,
       tiktokLikes: row[13] ? parseInt(row[13], 10) : null,
+      youtubeUrl: row[14] || undefined,
+      youtubeSubscribers: row[15] ? parseInt(row[15], 10) : null,
+      youtubeViews: row[16] ? parseInt(row[16], 10) : null,
+      youtubeVideoCount: row[17] ? parseInt(row[17], 10) : null,
     }));
   } catch (error) {
     console.error('Error fetching latest data:', error);

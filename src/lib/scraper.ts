@@ -1,6 +1,7 @@
 import { ScrapedChannel, ChannelConfig } from './types';
 import { extractViewCount, extractChannelName, extractSlugFromUrl, extractChannelLogo, extractGifCount } from './parser';
 import { scrapeTikTokProfile } from './tiktok';
+import { scrapeYouTubeChannel } from './youtube';
 
 const USER_AGENTS = [
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -75,6 +76,24 @@ export async function scrapeChannel(config: ChannelConfig): Promise<ScrapedChann
     }
   }
 
+  // Also scrape YouTube if URL provided
+  let youtubeSubscribers: number | null = null;
+  let youtubeViews: number | null = null;
+  let youtubeVideoCount: number | null = null;
+
+  if (config.youtubeUrl) {
+    try {
+      const youtubeStats = await scrapeYouTubeChannel(config.youtubeUrl);
+      if (youtubeStats) {
+        youtubeSubscribers = youtubeStats.subscribers;
+        youtubeViews = youtubeStats.totalViews;
+        youtubeVideoCount = youtubeStats.videoCount;
+      }
+    } catch (e) {
+      console.error(`YouTube scrape failed for ${config.youtubeUrl}:`, e);
+    }
+  }
+
   if (error || !html) {
     return {
       channelName: slug,
@@ -90,6 +109,10 @@ export async function scrapeChannel(config: ChannelConfig): Promise<ScrapedChann
       tiktokUrl: config.tiktokUrl,
       tiktokFollowers,
       tiktokLikes,
+      youtubeUrl: config.youtubeUrl,
+      youtubeSubscribers,
+      youtubeViews,
+      youtubeVideoCount,
     };
   }
 
@@ -113,6 +136,10 @@ export async function scrapeChannel(config: ChannelConfig): Promise<ScrapedChann
       tiktokUrl: config.tiktokUrl,
       tiktokFollowers,
       tiktokLikes,
+      youtubeUrl: config.youtubeUrl,
+      youtubeSubscribers,
+      youtubeViews,
+      youtubeVideoCount,
     };
   }
 
@@ -130,6 +157,10 @@ export async function scrapeChannel(config: ChannelConfig): Promise<ScrapedChann
     tiktokUrl: config.tiktokUrl,
     tiktokFollowers,
     tiktokLikes,
+    youtubeUrl: config.youtubeUrl,
+    youtubeSubscribers,
+    youtubeViews,
+    youtubeVideoCount,
   };
 }
 

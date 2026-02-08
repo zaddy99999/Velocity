@@ -6,6 +6,7 @@ export interface ChannelConfig {
   category: ChannelCategory;
   isAbstract?: boolean;
   tiktokUrl?: string;
+  youtubeUrl?: string;
 }
 
 export interface ScrapedChannel {
@@ -23,6 +24,11 @@ export interface ScrapedChannel {
   tiktokUrl?: string;
   tiktokFollowers?: number | null;
   tiktokLikes?: number | null;
+  // YouTube stats
+  youtubeUrl?: string;
+  youtubeSubscribers?: number | null;
+  youtubeViews?: number | null;
+  youtubeVideoCount?: number | null;
 }
 
 export interface DailyLogRow {
@@ -83,4 +89,9 @@ export interface ChannelDisplayData {
   tiktokUrl?: string;
   tiktokFollowers?: number | null;
   tiktokLikes?: number | null;
+  // YouTube stats
+  youtubeUrl?: string;
+  youtubeSubscribers?: number | null;
+  youtubeViews?: number | null;
+  youtubeVideoCount?: number | null;
 }
