@@ -46,7 +46,7 @@ export async function getChannelUrlsFromSheet(): Promise<ChannelConfig[]> {
 
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: `'${channelsTab}'!A:E`, // Expecting: Name, URL, Category, Abstract, TikTok
+      range: `'${channelsTab}'!A:F`, // Expecting: Name, URL, Category, Abstract, TikTok, YouTube
     });
 
     const rows = response.data.values || [];
@@ -64,6 +64,7 @@ export async function getChannelUrlsFromSheet(): Promise<ChannelConfig[]> {
       const abstractValue = row[3]?.trim()?.toLowerCase(); // Column D = Abstract (yes/no)
       const isAbstract = abstractValue === 'yes' || abstractValue === 'true' || abstractValue === '1';
       const tiktokUrl = row[4]?.trim(); // Column E = TikTok URL
+      const youtubeUrl = row[5]?.trim(); // Column F = YouTube URL
 
       if (url && url.startsWith('http')) {
         channels.push({
@@ -72,6 +73,7 @@ export async function getChannelUrlsFromSheet(): Promise<ChannelConfig[]> {
           category: category === 'web3' ? 'web3' : 'web2',
           isAbstract,
           tiktokUrl: tiktokUrl?.startsWith('http') ? tiktokUrl : undefined,
+          youtubeUrl: youtubeUrl?.startsWith('http') ? youtubeUrl : undefined,
         });
       }
     }

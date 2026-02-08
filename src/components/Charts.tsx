@@ -959,3 +959,219 @@ export function TikTokLikesChart({ channels, count = 15 }: { channels: ChannelDi
     </div>
   );
 }
+
+export function YouTubeSubscribersChart({ channels, count = 15 }: { channels: ChannelDisplayData[]; count?: number }) {
+  const chartRef = useRef<HTMLDivElement>(null);
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'copying' | 'copied' | 'error'>('idle');
+
+  const handleCopy = async () => {
+    setCopyStatus('copying');
+    const success = await copyChartToClipboard(chartRef);
+    setCopyStatus(success ? 'copied' : 'error');
+    setTimeout(() => setCopyStatus('idle'), 2000);
+  };
+
+  const viralityScores = calculateViralityScores(channels);
+
+  const data = [...channels]
+    .filter((ch) => ch.youtubeSubscribers && ch.youtubeSubscribers > 0)
+    .sort((a, b) => (b.youtubeSubscribers || 0) - (a.youtubeSubscribers || 0))
+    .slice(0, count)
+    .map((ch) => ({
+      name: `${ch.channelName}|||${ch.logoUrl || ''}|||${ch.youtubeUrl || ''}`,
+      fullName: ch.channelName,
+      subscribers: ch.youtubeSubscribers || 0,
+      sqrtSubscribers: Math.sqrt(ch.youtubeSubscribers || 0),
+      logoUrl: ch.logoUrl,
+      youtubeUrl: ch.youtubeUrl,
+      viralityScore: viralityScores.get(ch.channelUrl),
+    }));
+
+  if (data.length === 0) {
+    return (
+      <div className="empty-state">
+        <p>No YouTube subscriber data available</p>
+      </div>
+    );
+  }
+
+  const renderLabel = (props: any) => {
+    const { x, y, width, index } = props;
+    const originalValue = data[index]?.subscribers || 0;
+    return (
+      <text
+        x={x + width / 2}
+        y={y - 8}
+        fill="#fff"
+        textAnchor="middle"
+        fontSize={12}
+        fontWeight={700}
+        fontFamily="Inter, system-ui, sans-serif"
+      >
+        {formatNumber(originalValue)}
+      </text>
+    );
+  };
+
+  return (
+    <div>
+      <div ref={chartRef} style={{ backgroundColor: '#000', padding: '24px', borderRadius: '12px' }}>
+        <h3 className="chart-title">YouTube Subscribers</h3>
+        <ResponsiveContainer width="100%" height={420}>
+          <BarChart data={data} margin={{ left: 10, right: 10, top: 40, bottom: 80 }}>
+            <XAxis
+              dataKey="name"
+              stroke="transparent"
+              tickLine={false}
+              axisLine={false}
+              tick={<CustomXAxisTick />}
+              interval={0}
+              height={80}
+            />
+            <Tooltip content={<CustomTooltip />} cursor={false} />
+            <Bar
+              dataKey="sqrtSubscribers"
+              radius={[4, 4, 0, 0]}
+              maxBarSize={50}
+              onClick={(data) => {
+                if (data?.youtubeUrl) {
+                  window.open(data.youtubeUrl, '_blank');
+                }
+              }}
+              style={{ cursor: 'pointer' }}
+            >
+              <LabelList dataKey="sqrtSubscribers" content={renderLabel} />
+              {data.map((_, index) => (
+                <Cell
+                  key={index}
+                  fill={BAR_COLORS[index % BAR_COLORS.length]}
+                  style={{ cursor: 'pointer' }}
+                />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'center', marginTop: '16px' }}>
+        <button
+          onClick={handleCopy}
+          disabled={copyStatus === 'copying'}
+          className="copy-chart-btn"
+        >
+          {copyStatus === 'copying' && '📋 Copying...'}
+          {copyStatus === 'copied' && '✓ Copied!'}
+          {copyStatus === 'error' && '✗ Failed - Downloaded instead'}
+          {copyStatus === 'idle' && '📋 Copy Graph'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export function YouTubeViewsChart({ channels, count = 15 }: { channels: ChannelDisplayData[]; count?: number }) {
+  const chartRef = useRef<HTMLDivElement>(null);
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'copying' | 'copied' | 'error'>('idle');
+
+  const handleCopy = async () => {
+    setCopyStatus('copying');
+    const success = await copyChartToClipboard(chartRef);
+    setCopyStatus(success ? 'copied' : 'error');
+    setTimeout(() => setCopyStatus('idle'), 2000);
+  };
+
+  const viralityScores = calculateViralityScores(channels);
+
+  const data = [...channels]
+    .filter((ch) => ch.youtubeViews && ch.youtubeViews > 0)
+    .sort((a, b) => (b.youtubeViews || 0) - (a.youtubeViews || 0))
+    .slice(0, count)
+    .map((ch) => ({
+      name: `${ch.channelName}|||${ch.logoUrl || ''}|||${ch.youtubeUrl || ''}`,
+      fullName: ch.channelName,
+      views: ch.youtubeViews || 0,
+      sqrtViews: Math.sqrt(ch.youtubeViews || 0),
+      logoUrl: ch.logoUrl,
+      youtubeUrl: ch.youtubeUrl,
+      viralityScore: viralityScores.get(ch.channelUrl),
+    }));
+
+  if (data.length === 0) {
+    return (
+      <div className="empty-state">
+        <p>No YouTube views data available</p>
+      </div>
+    );
+  }
+
+  const renderLabel = (props: any) => {
+    const { x, y, width, index } = props;
+    const originalValue = data[index]?.views || 0;
+    return (
+      <text
+        x={x + width / 2}
+        y={y - 8}
+        fill="#fff"
+        textAnchor="middle"
+        fontSize={12}
+        fontWeight={700}
+        fontFamily="Inter, system-ui, sans-serif"
+      >
+        {formatNumber(originalValue)}
+      </text>
+    );
+  };
+
+  return (
+    <div>
+      <div ref={chartRef} style={{ backgroundColor: '#000', padding: '24px', borderRadius: '12px' }}>
+        <h3 className="chart-title">YouTube Total Views</h3>
+        <ResponsiveContainer width="100%" height={420}>
+          <BarChart data={data} margin={{ left: 10, right: 10, top: 40, bottom: 80 }}>
+            <XAxis
+              dataKey="name"
+              stroke="transparent"
+              tickLine={false}
+              axisLine={false}
+              tick={<CustomXAxisTick />}
+              interval={0}
+              height={80}
+            />
+            <Tooltip content={<CustomTooltip />} cursor={false} />
+            <Bar
+              dataKey="sqrtViews"
+              radius={[4, 4, 0, 0]}
+              maxBarSize={50}
+              onClick={(data) => {
+                if (data?.youtubeUrl) {
+                  window.open(data.youtubeUrl, '_blank');
+                }
+              }}
+              style={{ cursor: 'pointer' }}
+            >
+              <LabelList dataKey="sqrtViews" content={renderLabel} />
+              {data.map((_, index) => (
+                <Cell
+                  key={index}
+                  fill={BAR_COLORS[index % BAR_COLORS.length]}
+                  style={{ cursor: 'pointer' }}
+                />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'center', marginTop: '16px' }}>
+        <button
+          onClick={handleCopy}
+          disabled={copyStatus === 'copying'}
+          className="copy-chart-btn"
+        >
+          {copyStatus === 'copying' && '📋 Copying...'}
+          {copyStatus === 'copied' && '✓ Copied!'}
+          {copyStatus === 'error' && '✗ Failed - Downloaded instead'}
+          {copyStatus === 'idle' && '📋 Copy Graph'}
+        </button>
+      </div>
+    </div>
+  );
+}

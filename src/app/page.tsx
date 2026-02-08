@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import ChannelTable from '@/components/ChannelTable';
-import { TotalViewsChart, TikTokFollowersChart, TikTokLikesChart } from '@/components/Charts';
+import { TotalViewsChart, TikTokFollowersChart, TikTokLikesChart, YouTubeSubscribersChart, YouTubeViewsChart } from '@/components/Charts';
 import { ChannelDisplayData } from '@/lib/types';
+
+type ChartTab = 'giphy' | 'tiktok' | 'youtube';
 
 interface StatusResponse {
   channels: ChannelDisplayData[];
@@ -15,6 +17,9 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Chart tab state
+  const [activeTab, setActiveTab] = useState<ChartTab>('giphy');
+
   // GIPHY chart state
   const [giphyCategory, setGiphyCategory] = useState<'all' | 'web2' | 'web3' | 'abstract'>('web3');
   const [giphyScaleType, setGiphyScaleType] = useState<'linear' | 'sqrt' | 'log'>('sqrt');
@@ -25,6 +30,11 @@ export default function Home() {
   const [tiktokCategory, setTiktokCategory] = useState<'all' | 'web2' | 'web3' | 'abstract'>('web3');
   const [tiktokChartCount, setTiktokChartCount] = useState<number>(15);
   const [tiktokMetric, setTiktokMetric] = useState<'followers' | 'likes'>('followers');
+
+  // YouTube chart state
+  const [youtubeCategory, setYoutubeCategory] = useState<'all' | 'web2' | 'web3' | 'abstract'>('web3');
+  const [youtubeChartCount, setYoutubeChartCount] = useState<number>(15);
+  const [youtubeMetric, setYoutubeMetric] = useState<'subscribers' | 'views'>('subscribers');
 
   // Table filter state
   const [tableCategory, setTableCategory] = useState<'all' | 'web2' | 'web3' | 'abstract'>('all');
@@ -117,6 +127,9 @@ export default function Home() {
 
   // Filter channels for TikTok chart
   const tiktokFilteredChannels = channels.filter((ch) => filterByCategory(ch, tiktokCategory));
+
+  // Filter channels for YouTube chart
+  const youtubeFilteredChannels = channels.filter((ch) => filterByCategory(ch, youtubeCategory));
 
   // Filter channels for table
   const tableFilteredChannels = channels.filter((ch) => filterByCategory(ch, tableCategory));
@@ -244,110 +257,234 @@ export default function Home() {
         </div>
       )}
 
-      {/* GIPHY Chart */}
-      <div className="card" style={{ marginBottom: '1.5rem' }}>
-        <div className="filter-bar">
-          <span className="filter-label">Category</span>
-          <select
-            className="filter-select"
-            value={giphyCategory}
-            onChange={(e) => setGiphyCategory(e.target.value as 'all' | 'web2' | 'web3' | 'abstract')}
+      {/* Chart Section with Tabs */}
+      <div className="chart-section" style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
+        {/* Left Tab Navigation */}
+        <div className="chart-tabs" style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.5rem',
+          minWidth: '120px',
+        }}>
+          <button
+            className={`chart-tab ${activeTab === 'giphy' ? 'active' : ''}`}
+            onClick={() => setActiveTab('giphy')}
+            style={{
+              padding: '12px 16px',
+              border: 'none',
+              borderRadius: '8px',
+              background: activeTab === 'giphy' ? 'linear-gradient(135deg, #06b6d4, #0891b2)' : 'rgba(255,255,255,0.05)',
+              color: activeTab === 'giphy' ? '#fff' : 'rgba(255,255,255,0.6)',
+              cursor: 'pointer',
+              textAlign: 'left',
+              fontWeight: 600,
+              fontSize: '14px',
+              transition: 'all 0.2s ease',
+            }}
           >
-            <option value="all">All</option>
-            <option value="web2">Web2</option>
-            <option value="web3">Web3</option>
-            <option value="abstract">Abstract Only</option>
-          </select>
-
-          <span className="filter-label" style={{ marginLeft: '1.5rem' }}>Period</span>
-          <select
-            className="filter-select"
-            value={giphyTimePeriod}
-            onChange={(e) => setGiphyTimePeriod(e.target.value as 'daily' | 'weekly' | 'monthly' | 'yearly' | 'alltime')}
+            GIPHY
+          </button>
+          <button
+            className={`chart-tab ${activeTab === 'tiktok' ? 'active' : ''}`}
+            onClick={() => setActiveTab('tiktok')}
+            style={{
+              padding: '12px 16px',
+              border: 'none',
+              borderRadius: '8px',
+              background: activeTab === 'tiktok' ? 'linear-gradient(135deg, #06b6d4, #0891b2)' : 'rgba(255,255,255,0.05)',
+              color: activeTab === 'tiktok' ? '#fff' : 'rgba(255,255,255,0.6)',
+              cursor: 'pointer',
+              textAlign: 'left',
+              fontWeight: 600,
+              fontSize: '14px',
+              transition: 'all 0.2s ease',
+            }}
           >
-            <option value="alltime">All Time</option>
-            <option value="daily" disabled={!hasMultipleDays}>Daily{!hasMultipleDays ? ' (Need 2+ days)' : ''}</option>
-            <option value="weekly" disabled>Weekly (Coming Soon)</option>
-            <option value="monthly" disabled>Monthly (Coming Soon)</option>
-            <option value="yearly" disabled>Yearly (Coming Soon)</option>
-          </select>
-
-          <span className="filter-label" style={{ marginLeft: '1.5rem' }}>Scale</span>
-          <select
-            className="filter-select"
-            value={giphyScaleType}
-            onChange={(e) => setGiphyScaleType(e.target.value as 'linear' | 'sqrt' | 'log')}
+            TikTok
+          </button>
+          <button
+            className={`chart-tab ${activeTab === 'youtube' ? 'active' : ''}`}
+            onClick={() => setActiveTab('youtube')}
+            style={{
+              padding: '12px 16px',
+              border: 'none',
+              borderRadius: '8px',
+              background: activeTab === 'youtube' ? 'linear-gradient(135deg, #06b6d4, #0891b2)' : 'rgba(255,255,255,0.05)',
+              color: activeTab === 'youtube' ? '#fff' : 'rgba(255,255,255,0.6)',
+              cursor: 'pointer',
+              textAlign: 'left',
+              fontWeight: 600,
+              fontSize: '14px',
+              transition: 'all 0.2s ease',
+            }}
           >
-            <option value="linear">Linear</option>
-            <option value="sqrt">Sqrt</option>
-            <option value="log">Log</option>
-          </select>
-
-          <span className="filter-label" style={{ marginLeft: '1.5rem' }}>Show</span>
-          <select
-            className="filter-select"
-            value={giphyChartCount}
-            onChange={(e) => setGiphyChartCount(Number(e.target.value))}
-          >
-            <option value={5}>5</option>
-            <option value={10}>10</option>
-            <option value={15}>15</option>
-            <option value={20}>20</option>
-            <option value={25}>25</option>
-          </select>
+            YouTube
+          </button>
         </div>
 
-        <h2>📊 GIPHY Views</h2>
-        <div className="chart-container">
-          <TotalViewsChart channels={giphyFilteredChannels} scaleType={giphyScaleType} timePeriod={giphyTimePeriod} count={giphyChartCount} />
-        </div>
-      </div>
+        {/* Chart Content */}
+        <div className="card" style={{ flex: 1 }}>
+          {/* GIPHY Chart */}
+          {activeTab === 'giphy' && (
+            <>
+              <div className="filter-bar">
+                <span className="filter-label">Category</span>
+                <select
+                  className="filter-select"
+                  value={giphyCategory}
+                  onChange={(e) => setGiphyCategory(e.target.value as 'all' | 'web2' | 'web3' | 'abstract')}
+                >
+                  <option value="all">All</option>
+                  <option value="web2">Web2</option>
+                  <option value="web3">Web3</option>
+                  <option value="abstract">Abstract Only</option>
+                </select>
 
-      {/* TikTok Chart */}
-      <div className="card" style={{ marginBottom: '1.5rem' }}>
-        <div className="filter-bar">
-          <span className="filter-label">Category</span>
-          <select
-            className="filter-select"
-            value={tiktokCategory}
-            onChange={(e) => setTiktokCategory(e.target.value as 'all' | 'web2' | 'web3' | 'abstract')}
-          >
-            <option value="all">All</option>
-            <option value="web2">Web2</option>
-            <option value="web3">Web3</option>
-            <option value="abstract">Abstract Only</option>
-          </select>
+                <span className="filter-label" style={{ marginLeft: '1.5rem' }}>Period</span>
+                <select
+                  className="filter-select"
+                  value={giphyTimePeriod}
+                  onChange={(e) => setGiphyTimePeriod(e.target.value as 'daily' | 'weekly' | 'monthly' | 'yearly' | 'alltime')}
+                >
+                  <option value="alltime">All Time</option>
+                  <option value="daily" disabled={!hasMultipleDays}>Daily{!hasMultipleDays ? ' (Need 2+ days)' : ''}</option>
+                  <option value="weekly" disabled>Weekly (Coming Soon)</option>
+                  <option value="monthly" disabled>Monthly (Coming Soon)</option>
+                  <option value="yearly" disabled>Yearly (Coming Soon)</option>
+                </select>
 
-          <span className="filter-label" style={{ marginLeft: '1.5rem' }}>Metric</span>
-          <select
-            className="filter-select"
-            value={tiktokMetric}
-            onChange={(e) => setTiktokMetric(e.target.value as 'followers' | 'likes')}
-          >
-            <option value="followers">Followers</option>
-            <option value="likes">Likes</option>
-          </select>
+                <span className="filter-label" style={{ marginLeft: '1.5rem' }}>Scale</span>
+                <select
+                  className="filter-select"
+                  value={giphyScaleType}
+                  onChange={(e) => setGiphyScaleType(e.target.value as 'linear' | 'sqrt' | 'log')}
+                >
+                  <option value="linear">Linear</option>
+                  <option value="sqrt">Sqrt</option>
+                  <option value="log">Log</option>
+                </select>
 
-          <span className="filter-label" style={{ marginLeft: '1.5rem' }}>Show</span>
-          <select
-            className="filter-select"
-            value={tiktokChartCount}
-            onChange={(e) => setTiktokChartCount(Number(e.target.value))}
-          >
-            <option value={5}>5</option>
-            <option value={10}>10</option>
-            <option value={15}>15</option>
-            <option value={20}>20</option>
-            <option value={25}>25</option>
-          </select>
-        </div>
+                <span className="filter-label" style={{ marginLeft: '1.5rem' }}>Show</span>
+                <select
+                  className="filter-select"
+                  value={giphyChartCount}
+                  onChange={(e) => setGiphyChartCount(Number(e.target.value))}
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={15}>15</option>
+                  <option value={20}>20</option>
+                  <option value={25}>25</option>
+                </select>
+              </div>
 
-        <h2>📱 TikTok {tiktokMetric === 'followers' ? 'Followers' : 'Likes'}</h2>
-        <div className="chart-container">
-          {tiktokMetric === 'followers' ? (
-            <TikTokFollowersChart channels={tiktokFilteredChannels} count={tiktokChartCount} />
-          ) : (
-            <TikTokLikesChart channels={tiktokFilteredChannels} count={tiktokChartCount} />
+              <h2>GIPHY Views</h2>
+              <div className="chart-container">
+                <TotalViewsChart channels={giphyFilteredChannels} scaleType={giphyScaleType} timePeriod={giphyTimePeriod} count={giphyChartCount} />
+              </div>
+            </>
+          )}
+
+          {/* TikTok Chart */}
+          {activeTab === 'tiktok' && (
+            <>
+              <div className="filter-bar">
+                <span className="filter-label">Category</span>
+                <select
+                  className="filter-select"
+                  value={tiktokCategory}
+                  onChange={(e) => setTiktokCategory(e.target.value as 'all' | 'web2' | 'web3' | 'abstract')}
+                >
+                  <option value="all">All</option>
+                  <option value="web2">Web2</option>
+                  <option value="web3">Web3</option>
+                  <option value="abstract">Abstract Only</option>
+                </select>
+
+                <span className="filter-label" style={{ marginLeft: '1.5rem' }}>Metric</span>
+                <select
+                  className="filter-select"
+                  value={tiktokMetric}
+                  onChange={(e) => setTiktokMetric(e.target.value as 'followers' | 'likes')}
+                >
+                  <option value="followers">Followers</option>
+                  <option value="likes">Likes</option>
+                </select>
+
+                <span className="filter-label" style={{ marginLeft: '1.5rem' }}>Show</span>
+                <select
+                  className="filter-select"
+                  value={tiktokChartCount}
+                  onChange={(e) => setTiktokChartCount(Number(e.target.value))}
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={15}>15</option>
+                  <option value={20}>20</option>
+                  <option value={25}>25</option>
+                </select>
+              </div>
+
+              <h2>TikTok {tiktokMetric === 'followers' ? 'Followers' : 'Likes'}</h2>
+              <div className="chart-container">
+                {tiktokMetric === 'followers' ? (
+                  <TikTokFollowersChart channels={tiktokFilteredChannels} count={tiktokChartCount} />
+                ) : (
+                  <TikTokLikesChart channels={tiktokFilteredChannels} count={tiktokChartCount} />
+                )}
+              </div>
+            </>
+          )}
+
+          {/* YouTube Chart */}
+          {activeTab === 'youtube' && (
+            <>
+              <div className="filter-bar">
+                <span className="filter-label">Category</span>
+                <select
+                  className="filter-select"
+                  value={youtubeCategory}
+                  onChange={(e) => setYoutubeCategory(e.target.value as 'all' | 'web2' | 'web3' | 'abstract')}
+                >
+                  <option value="all">All</option>
+                  <option value="web2">Web2</option>
+                  <option value="web3">Web3</option>
+                  <option value="abstract">Abstract Only</option>
+                </select>
+
+                <span className="filter-label" style={{ marginLeft: '1.5rem' }}>Metric</span>
+                <select
+                  className="filter-select"
+                  value={youtubeMetric}
+                  onChange={(e) => setYoutubeMetric(e.target.value as 'subscribers' | 'views')}
+                >
+                  <option value="subscribers">Subscribers</option>
+                  <option value="views">Total Views</option>
+                </select>
+
+                <span className="filter-label" style={{ marginLeft: '1.5rem' }}>Show</span>
+                <select
+                  className="filter-select"
+                  value={youtubeChartCount}
+                  onChange={(e) => setYoutubeChartCount(Number(e.target.value))}
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={15}>15</option>
+                  <option value={20}>20</option>
+                  <option value={25}>25</option>
+                </select>
+              </div>
+
+              <h2>YouTube {youtubeMetric === 'subscribers' ? 'Subscribers' : 'Total Views'}</h2>
+              <div className="chart-container">
+                {youtubeMetric === 'subscribers' ? (
+                  <YouTubeSubscribersChart channels={youtubeFilteredChannels} count={youtubeChartCount} />
+                ) : (
+                  <YouTubeViewsChart channels={youtubeFilteredChannels} count={youtubeChartCount} />
+                )}
+              </div>
+            </>
           )}
         </div>
       </div>
