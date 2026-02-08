@@ -43,16 +43,30 @@ function getPercentile(value: number, allValues: number[]): number {
 export function calculateViralityScores(channels: ChannelDisplayData[]): Map<string, ViralityScore> {
   const scores = new Map<string, ViralityScore>();
 
-  // Get all values for percentile calculations
-  const allViews = channels.map(ch => ch.totalViews);
-  const allFollowers = channels.map(ch => ch.tiktokFollowers || 0);
-  const allLikes = channels.map(ch => ch.tiktokLikes || 0);
+  // Separate channels by category for separate scaling
+  const web2Channels = channels.filter(ch => ch.category === 'web2');
+  const web3Channels = channels.filter(ch => ch.category === 'web3');
+
+  // Get values for each category separately
+  const web2Views = web2Channels.map(ch => ch.totalViews);
+  const web2Followers = web2Channels.map(ch => ch.tiktokFollowers || 0);
+  const web2Likes = web2Channels.map(ch => ch.tiktokLikes || 0);
+
+  const web3Views = web3Channels.map(ch => ch.totalViews);
+  const web3Followers = web3Channels.map(ch => ch.tiktokFollowers || 0);
+  const web3Likes = web3Channels.map(ch => ch.tiktokLikes || 0);
 
   for (const channel of channels) {
-    // Calculate percentile for each metric
-    const viewsPercentile = getPercentile(channel.totalViews, allViews);
-    const followersPercentile = getPercentile(channel.tiktokFollowers || 0, allFollowers);
-    const likesPercentile = getPercentile(channel.tiktokLikes || 0, allLikes);
+    // Use the appropriate category's data for percentile calculation
+    const isWeb2 = channel.category === 'web2';
+    const categoryViews = isWeb2 ? web2Views : web3Views;
+    const categoryFollowers = isWeb2 ? web2Followers : web3Followers;
+    const categoryLikes = isWeb2 ? web2Likes : web3Likes;
+
+    // Calculate percentile within the same category
+    const viewsPercentile = getPercentile(channel.totalViews, categoryViews);
+    const followersPercentile = getPercentile(channel.tiktokFollowers || 0, categoryFollowers);
+    const likesPercentile = getPercentile(channel.tiktokLikes || 0, categoryLikes);
 
     // Weight the scores (GIPHY views weighted more since everyone has it)
     // If they have TikTok, factor that in
