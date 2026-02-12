@@ -578,20 +578,13 @@ function TokenHeatmap({ tokens, scaleType = 'balanced' }: { tokens: Token[]; sca
                       style={{ cursor: 'pointer' }}
                     />
                   )}
-                  {/* Gradient overlay for text readability - darker at top left */}
-                  <defs>
-                    <linearGradient id={`overlay-${index}`} x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="rgba(0,0,0,0.7)" />
-                      <stop offset="50%" stopColor="rgba(0,0,0,0.2)" />
-                      <stop offset="100%" stopColor="rgba(0,0,0,0.1)" />
-                    </linearGradient>
-                  </defs>
+                  {/* Light overlay for text readability */}
                   <rect
                     x={tileX}
                     y={tileY}
                     width={tileW}
                     height={tileH}
-                    fill={hasImage ? `url(#overlay-${index})` : 'rgba(0,0,0,0.15)'}
+                    fill={hasImage ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.15)'}
                     rx={8}
                     style={{ cursor: 'pointer' }}
                   />
