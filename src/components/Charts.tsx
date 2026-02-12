@@ -82,15 +82,25 @@ async function copyChartToClipboard(chartRef: React.RefObject<HTMLDivElement | n
 
 // Get title based on time period
 function getChartTitle(timePeriod: TimePeriod, type: 'views' | 'growth'): string {
-  const periodLabels: Record<TimePeriod, string> = {
-    daily: 'Daily',
-    weekly: 'Weekly',
-    monthly: 'Monthly',
-    yearly: 'Yearly',
-    alltime: 'All Time',
-  };
-  const period = periodLabels[timePeriod];
-  return type === 'views' ? `${period} GIPHY Views` : `${period} GIPHY Growth`;
+  if (type === 'views') {
+    switch (timePeriod) {
+      case 'daily':
+        return 'GIPHY Views (24h Change)';
+      case 'weekly':
+        return 'GIPHY Views (7d Change)';
+      default:
+        return 'All Time GIPHY Views';
+    }
+  } else {
+    const periodLabels: Record<TimePeriod, string> = {
+      daily: 'Daily',
+      weekly: 'Weekly',
+      monthly: 'Monthly',
+      yearly: 'Yearly',
+      alltime: 'All Time',
+    };
+    return `${periodLabels[timePeriod]} GIPHY Growth`;
+  }
 }
 
 type TimePeriod = 'daily' | 'weekly' | 'monthly' | 'yearly' | 'alltime';
@@ -319,17 +329,34 @@ export function TotalViewsChart({ channels, scaleType = 'linear', timePeriod = '
     setTimeout(() => setCopyStatus('idle'), 2000);
   };
 
+  // Get the appropriate value based on time period
+  const getViewValue = (ch: ChannelDisplayData): number => {
+    switch (timePeriod) {
+      case 'daily':
+        return ch.delta1d ?? 0;
+      case 'weekly':
+        return ch.avg7dDelta ? ch.avg7dDelta * 7 : 0;
+      default:
+        return ch.totalViews;
+    }
+  };
+
   const data = [...channels]
-    .sort((a, b) => b.totalViews - a.totalViews)
+    .map((ch) => ({
+      channel: ch,
+      value: getViewValue(ch),
+    }))
+    .filter(d => d.value > 0) // Only show positive values for daily/weekly
+    .sort((a, b) => b.value - a.value)
     .slice(0, count)
-    .map((ch, idx) => ({
-      name: `${ch.channelName}|||${ch.logoUrl || ''}|||${ch.channelUrl}`,
-      fullName: ch.channelName,
-      views: ch.totalViews,
-      sqrtViews: Math.sqrt(ch.totalViews),
-      logViews: ch.totalViews > 0 ? Math.log10(ch.totalViews) : 0,
-      logoUrl: ch.logoUrl,
-      channelUrl: ch.channelUrl,
+    .map((d, idx) => ({
+      name: `${d.channel.channelName}|||${d.channel.logoUrl || ''}|||${d.channel.channelUrl}`,
+      fullName: d.channel.channelName,
+      views: d.value,
+      sqrtViews: Math.sqrt(d.value),
+      logViews: d.value > 0 ? Math.log10(d.value) : 0,
+      logoUrl: d.channel.logoUrl,
+      channelUrl: d.channel.channelUrl,
       rank: idx + 1,
     }));
 
@@ -457,6 +484,7 @@ export function TotalViewsChart({ channels, scaleType = 'linear', timePeriod = '
             </Bar>
           </BarChart>
         </ResponsiveContainer>
+        <div className="chart-watermark">ZaddyTools</div>
       </div>
       <div className="copy-btn-wrapper">
         <button
@@ -571,6 +599,7 @@ export function GifCountChart({ channels, scaleType = 'linear', count = 15 }: Pr
             </Bar>
           </BarChart>
         </ResponsiveContainer>
+        <div className="chart-watermark">ZaddyTools</div>
       </div>
       <div className="copy-btn-wrapper">
         <button
@@ -739,6 +768,7 @@ export function DailyGrowthChart({ channels, scaleType = 'linear', timePeriod = 
             </Bar>
           </BarChart>
         </ResponsiveContainer>
+        <div className="chart-watermark">ZaddyTools</div>
       </div>
       <div className="copy-btn-wrapper">
         <button
@@ -872,6 +902,7 @@ export function TikTokFollowersChart({ channels, count = 15, scaleType = 'sqrt' 
             </Bar>
           </BarChart>
         </ResponsiveContainer>
+        <div className="chart-watermark">ZaddyTools</div>
       </div>
       <div className="copy-btn-wrapper">
         <button
@@ -1005,6 +1036,7 @@ export function TikTokLikesChart({ channels, count = 15, scaleType = 'sqrt' }: {
             </Bar>
           </BarChart>
         </ResponsiveContainer>
+        <div className="chart-watermark">ZaddyTools</div>
       </div>
       <div className="copy-btn-wrapper">
         <button
@@ -1138,6 +1170,7 @@ export function YouTubeSubscribersChart({ channels, count = 15, scaleType = 'sqr
             </Bar>
           </BarChart>
         </ResponsiveContainer>
+        <div className="chart-watermark">ZaddyTools</div>
       </div>
       <div className="copy-btn-wrapper">
         <button
@@ -1271,6 +1304,7 @@ export function YouTubeViewsChart({ channels, count = 15, scaleType = 'sqrt' }: 
             </Bar>
           </BarChart>
         </ResponsiveContainer>
+        <div className="chart-watermark">ZaddyTools</div>
       </div>
       <div className="copy-btn-wrapper">
         <button

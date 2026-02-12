@@ -1,0 +1,372 @@
+'use client';
+
+import { useState, useRef } from 'react';
+import NavBar from '@/components/NavBar';
+
+type CardType = 'id' | 'xp';
+type RankTier = 'Bronze' | 'Silver' | 'Gold' | 'Platinum' | 'Diamond' | 'Obsidian';
+type RankLevel = '1' | '2' | '3';
+type Role = 'Elite Chad' | 'Graduated Elite Chad' | 'Gigachad';
+
+interface XPPreset {
+  name: string;
+  image: string | null;
+  displayName: string;
+  xp: string;
+  level: string;
+  joinDate: string;
+}
+
+const XP_PRESETS: XPPreset[] = [
+  { name: 'Hammie', image: '/HammieBannerBigger.gif', displayName: '', xp: '', level: '', joinDate: '' },
+  { name: 'Custom', image: null, displayName: '', xp: '', level: '', joinDate: '' },
+];
+
+export default function XPCardPage() {
+  const [cardType, setCardType] = useState<CardType>('id');
+
+  // ID Card state - defaults for testing
+  const [idProfileImage, setIdProfileImage] = useState<string | null>('/ZaddyPFP.png');
+  const [idDisplayName, setIdDisplayName] = useState('Zaddy');
+  const [rankTier, setRankTier] = useState<RankTier>('Platinum');
+  const [rankLevel, setRankLevel] = useState<RankLevel>('1');
+  const [role, setRole] = useState<Role>('Graduated Elite Chad');
+
+  // XP Card state
+  const [xpProfileImage, setXpProfileImage] = useState<string | null>('/ZaddyPFP.png');
+  const [xpBackgroundImage, setXpBackgroundImage] = useState<string | null>('/HammieBannerBigger.gif');
+  const [xpDisplayName, setXpDisplayName] = useState('Zaddy');
+  const [xpAmount, setXpAmount] = useState('69,000');
+  const [level, setLevel] = useState('');
+  const [joinDate, setJoinDate] = useState('');
+  const [selectedPreset, setSelectedPreset] = useState<string>('Hammie');
+
+  const applyPreset = (presetName: string) => {
+    const preset = XP_PRESETS.find(p => p.name === presetName);
+    if (preset) {
+      setSelectedPreset(presetName);
+      setXpBackgroundImage(preset.image);
+    }
+  };
+
+  const idFileInputRef = useRef<HTMLInputElement>(null);
+  const xpFileInputRef = useRef<HTMLInputElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  const rankTiers: RankTier[] = ['Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond', 'Obsidian'];
+  const rankLevels: RankLevel[] = ['1', '2', '3'];
+  const roles: Role[] = ['Elite Chad', 'Graduated Elite Chad', 'Gigachad'];
+
+  const handleIdImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setIdProfileImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleXpImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setXpProfileImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleDownload = async () => {
+    if (!cardRef.current) return;
+
+    try {
+      const html2canvas = (await import('html2canvas')).default;
+      const canvas = await html2canvas(cardRef.current, {
+        backgroundColor: null,
+        scale: 2,
+      });
+
+      const name = cardType === 'id' ? idDisplayName : xpDisplayName;
+      const link = document.createElement('a');
+      link.download = `abstract-${cardType}-${name || 'card'}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch (error) {
+      console.error('Error generating image:', error);
+    }
+  };
+
+  const handleCopy = async () => {
+    if (!cardRef.current) return;
+
+    try {
+      const html2canvas = (await import('html2canvas')).default;
+      const canvas = await html2canvas(cardRef.current, {
+        backgroundColor: null,
+        scale: 2,
+      });
+
+      canvas.toBlob(async (blob) => {
+        if (blob) {
+          await navigator.clipboard.write([
+            new ClipboardItem({ 'image/png': blob })
+          ]);
+        }
+      }, 'image/png');
+    } catch (error) {
+      console.error('Error copying image:', error);
+    }
+  };
+
+  return (
+    <main className="container">
+      {/* Banner Header */}
+      <div className="banner-header">
+        <div className="banner-content">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <img src="/ZaddyPFP.png" alt="Logo" style={{ width: 56, height: 56, borderRadius: '10px', border: '2px solid rgba(46, 219, 132, 0.3)' }} />
+            <div>
+              <h1 style={{ marginBottom: 0 }}>ZaddyTools</h1>
+              <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem', margin: 0 }}>Card Generator</p>
+            </div>
+          </div>
+          <NavBar />
+        </div>
+      </div>
+
+      {/* Main Layout */}
+      <div className="id-generator-grid">
+        {/* Configuration Card */}
+        <div className="id-config-card">
+          {/* Card Type Toggle */}
+          <div className="card-type-toggle" style={{ marginBottom: '1rem' }}>
+            <button
+              className={`card-type-btn ${cardType === 'id' ? 'active' : ''}`}
+              onClick={() => setCardType('id')}
+            >
+              ID Card
+            </button>
+            <button
+              className={`card-type-btn ${cardType === 'xp' ? 'active' : ''}`}
+              onClick={() => setCardType('xp')}
+            >
+              XP Card
+            </button>
+          </div>
+
+          {cardType === 'id' ? (
+            <>
+              {/* ID Card Fields */}
+              <div className="id-section">
+                <label className="id-label">Profile Image</label>
+                <div
+                  className="id-upload-box"
+                  onClick={() => idFileInputRef.current?.click()}
+                >
+                  {idProfileImage ? (
+                    <img src={idProfileImage} alt="Profile" className="id-upload-preview" />
+                  ) : (
+                    <div className="id-upload-placeholder">
+                      <span className="id-upload-icon">+</span>
+                      <span>Click to upload</span>
+                    </div>
+                  )}
+                  <input
+                    ref={idFileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleIdImageUpload}
+                    style={{ display: 'none' }}
+                  />
+                </div>
+              </div>
+
+              <div className="id-section">
+                <label className="id-label">Display Name</label>
+                <input
+                  type="text"
+                  className="id-input"
+                  placeholder="Enter your name"
+                  value={idDisplayName}
+                  onChange={(e) => setIdDisplayName(e.target.value)}
+                />
+              </div>
+
+              <div className="id-section">
+                <label className="id-label">Rank</label>
+                <div className="id-rank-dropdowns">
+                  <select
+                    className="id-select"
+                    value={rankTier}
+                    onChange={(e) => setRankTier(e.target.value as RankTier)}
+                  >
+                    {rankTiers.map((t) => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                  <select
+                    className="id-select"
+                    value={rankLevel}
+                    onChange={(e) => setRankLevel(e.target.value as RankLevel)}
+                  >
+                    {rankLevels.map((l) => (
+                      <option key={l} value={l}>{l}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="id-section">
+                <label className="id-label">Role</label>
+                <div className="id-role-list">
+                  {roles.map((r) => (
+                    <button
+                      key={r}
+                      className={`id-role-btn ${role === r ? 'active' : ''}`}
+                      onClick={() => setRole(r)}
+                    >
+                      {r}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* XP Card Presets */}
+              <div className="id-section">
+                <label className="id-label">Quick Presets</label>
+                <div className="xp-preset-grid">
+                  {XP_PRESETS.map((preset) => (
+                    <div
+                      key={preset.name}
+                      className={`xp-preset-card ${selectedPreset === preset.name ? 'active' : ''}`}
+                      onClick={() => applyPreset(preset.name)}
+                    >
+                      {preset.image ? (
+                        <img src={preset.image} alt={preset.name} />
+                      ) : (
+                        <span className="xp-preset-placeholder">+</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* XP Card Fields */}
+              <div className="id-section">
+                <label className="id-label">Profile Image</label>
+                <div
+                  className="id-upload-box"
+                  onClick={() => xpFileInputRef.current?.click()}
+                >
+                  {xpProfileImage ? (
+                    <img src={xpProfileImage} alt="Profile" className="id-upload-preview" />
+                  ) : (
+                    <div className="id-upload-placeholder">
+                      <span className="id-upload-icon">+</span>
+                      <span>Click to upload</span>
+                    </div>
+                  )}
+                  <input
+                    ref={xpFileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleXpImageUpload}
+                    style={{ display: 'none' }}
+                  />
+                </div>
+              </div>
+
+              <div className="id-section">
+                <label className="id-label">Display Name</label>
+                <input
+                  type="text"
+                  className="id-input"
+                  placeholder="Enter your name"
+                  value={xpDisplayName}
+                  onChange={(e) => setXpDisplayName(e.target.value)}
+                />
+              </div>
+
+              <div className="id-section">
+                <label className="id-label">XP Amount</label>
+                <input
+                  type="text"
+                  className="id-input"
+                  placeholder="e.g. 12,500"
+                  value={xpAmount}
+                  onChange={(e) => setXpAmount(e.target.value)}
+                />
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Live Preview Card */}
+        <div className="id-preview-card">
+          <h3 className="id-card-header">Live Preview</h3>
+
+          <div className="id-preview-container">
+            {cardType === 'id' ? (
+              /* ID Card Preview */
+              <div ref={cardRef} className="abstract-id-card">
+                <img src="/AbstractIDCard.png?v=3" alt="Abstract ID" className="abstract-id-bg" />
+                <div className="abstract-id-avatar">
+                  {idProfileImage ? (
+                    <img src={idProfileImage} alt="Profile" />
+                  ) : (
+                    <div className="abstract-id-avatar-placeholder" />
+                  )}
+                </div>
+                <span className="abstract-id-name">{idDisplayName || 'Your Name'}</span>
+                <span className="abstract-id-rank">{rankTier} {rankLevel}</span>
+                <span className="abstract-id-role">{role}</span>
+                <span className="card-watermark">ZaddyTools</span>
+              </div>
+            ) : (
+              /* XP Card Preview */
+              <div ref={cardRef} className="abstract-xp-card" style={xpBackgroundImage ? { backgroundImage: `url(${xpBackgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}>
+                <div className="abstract-xp-header">
+                  <span className="abstract-xp-title">ABSTRACT XP CARD</span>
+                  <img src="/abspfp.png" alt="Abstract" className="abstract-xp-logo" />
+                </div>
+                <div className="abstract-xp-content">
+                  <div className="abstract-xp-avatar">
+                    {xpProfileImage ? (
+                      <img src={xpProfileImage} alt="Profile" />
+                    ) : (
+                      <div className="abstract-xp-avatar-placeholder" />
+                    )}
+                  </div>
+                  <div className="abstract-xp-info">
+                    <p className="abstract-xp-name">{xpDisplayName || 'Your Name'}</p>
+                    <div className="abstract-xp-stats">
+                      <div className="abstract-xp-stat">
+                        <span className="abstract-xp-stat-value">{xpAmount || '0'}</span>
+                        <span className="abstract-xp-stat-label">XP</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <span className="card-watermark">ZaddyTools</span>
+              </div>
+            )}
+          </div>
+
+          <div className="id-btn-group">
+            <button className="id-download-btn" onClick={handleDownload}>
+              DOWNLOAD CARD
+            </button>
+            <button className="id-copy-btn" onClick={handleCopy}>
+              COPY CARD
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+}

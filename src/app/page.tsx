@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import ChannelTable from '@/components/ChannelTable';
+import NavBar from '@/components/NavBar';
 import { TotalViewsChart, TikTokFollowersChart, TikTokLikesChart, YouTubeSubscribersChart, YouTubeViewsChart } from '@/components/Charts';
 import { ChannelDisplayData } from '@/lib/types';
 
@@ -162,30 +163,16 @@ export default function Home() {
     <main className="container">
       {/* Banner Header */}
       <div className="banner-header">
-        <img src="/absbanner2.png" alt="" className="banner-bg" />
-        <div className="banner-overlay" />
         <div className="banner-content">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <img src="/abspfp.png" alt="Logo" style={{ width: 56, height: 56, borderRadius: '10px', border: '2px solid rgba(46, 219, 132, 0.3)' }} />
+            <img src="/ZaddyPFP.png" alt="Logo" style={{ width: 56, height: 56, borderRadius: '10px', border: '2px solid rgba(46, 219, 132, 0.3)' }} />
             <div>
-              <h1 style={{ marginBottom: 0 }}>Virality3</h1>
+              <h1 style={{ marginBottom: 0 }}>ZaddyTools</h1>
               <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem', margin: 0 }}>Social Analytics Dashboard</p>
             </div>
           </div>
 
-          {/* Navigation */}
-          <nav className="top-nav">
-            <button className="nav-btn active">Social Analytics</button>
-            <button className="nav-btn">XP Card</button>
-            <button className="nav-btn">Creator Dashboard</button>
-          </nav>
-
-          <button
-            className="suggest-btn"
-            onClick={() => setShowSuggestModal(true)}
-          >
-            + Suggest Addition
-          </button>
+          <NavBar />
         </div>
       </div>
 
@@ -298,6 +285,16 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {/* Suggest Button */}
+      <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'flex-end' }}>
+        <button
+          className="suggest-btn"
+          onClick={() => setShowSuggestModal(true)}
+        >
+          + Suggest Addition
+        </button>
+      </div>
 
       {/* Chart Section with Tabs */}
       <div className="chart-section" style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem' }}>
@@ -577,10 +574,10 @@ export default function Home() {
       </div>
 
       {/* Table */}
-      <div className="card">
+      <div className="card" style={{ marginLeft: 'calc(100px + 0.75rem)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
           <h2 style={{ marginBottom: 0 }}>🎯 All Channels ({tableFilteredChannels.length})</h2>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <span className="filter-label">Category</span>
             <select
               className="filter-select"

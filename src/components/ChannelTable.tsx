@@ -113,13 +113,13 @@ export default function ChannelTable({ channels }: Props) {
               Category <SortIcon field="category" />
             </th>
             <th onClick={() => handleSort('totalViews')} className="sortable">
-              Total Views <SortIcon field="totalViews" />
+              Giphy Views <SortIcon field="totalViews" />
             </th>
             <th onClick={() => handleSort('delta1d')} className="sortable">
-              Daily <SortIcon field="delta1d" />
+              Giphy Daily <SortIcon field="delta1d" />
             </th>
             <th onClick={() => handleSort('avg7dDelta')} className="sortable">
-              7d Avg <SortIcon field="avg7dDelta" />
+              Giphy 7d Avg <SortIcon field="avg7dDelta" />
             </th>
             <th onClick={() => handleSort('tiktokFollowers')} className="sortable">
               TikTok Followers <SortIcon field="tiktokFollowers" />
