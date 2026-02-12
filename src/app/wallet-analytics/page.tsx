@@ -433,9 +433,8 @@ export default function WalletAnalyticsPage() {
                 <div className="wallet-stat-value">{walletData.abstractBadgeCount || 0}</div>
                 <div className="wallet-stat-label">Badges</div>
               </div>
-              <div className="wallet-stat-card">
-                <div className="wallet-stat-value">{walletData.xeetCardCount || 0}</div>
-                <div className="wallet-stat-label">Xeet Cards</div>
+              <div className="wallet-stat-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div className="wallet-stat-value" style={{ fontSize: '0.85rem' }}>Xeet Creator Cards ({walletData.xeetCardCount || 0})</div>
               </div>
               <div className="wallet-stat-card">
                 <div className="wallet-stat-value">{walletData.tradingVolumeUsd}</div>
