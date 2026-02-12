@@ -433,9 +433,6 @@ export default function WalletAnalyticsPage() {
                 <div className="wallet-stat-value">{walletData.abstractBadgeCount || 0}</div>
                 <div className="wallet-stat-label">Badges</div>
               </div>
-              <div className="wallet-stat-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <div className="wallet-stat-value" style={{ fontSize: '0.85rem' }}>Xeet Creator Cards ({walletData.xeetCardCount || 0})</div>
-              </div>
               <div className="wallet-stat-card">
                 <div className="wallet-stat-value">{walletData.tradingVolumeUsd}</div>
                 <div className="wallet-stat-label">Volume</div>
@@ -523,11 +520,8 @@ export default function WalletAnalyticsPage() {
                   alt="Xeet"
                   style={{ width: 24, height: 24, borderRadius: '4px' }}
                 />
-                <h3 style={{ margin: 0, color: '#00cccc', fontSize: '0.9rem' }}>Xeet Creator Cards</h3>
+                <h3 style={{ margin: 0, color: '#00cccc', fontSize: '0.9rem' }}>Xeet Creator Cards ({walletData.xeetCardCount || 0})</h3>
               </div>
-              <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)' }}>
-                {walletData.xeetCardCount || 0} card{walletData.xeetCardCount !== 1 ? 's' : ''}
-              </span>
             </div>
             {walletData.xeetCards && walletData.xeetCards.length > 0 ? (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '0.75rem' }}>
