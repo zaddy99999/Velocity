@@ -3,6 +3,94 @@ import { NextRequest, NextResponse } from 'next/server';
 // OpenSea API for Abstract NFTs
 const OPENSEA_API = 'https://api.opensea.io/api/v2';
 
+// ==================== CACHE & VALIDATION SYSTEM ====================
+
+// Known top NFT collections that should always appear (slugs)
+const KNOWN_TOP_NFTS = [
+  'gigaverse-roms-abstract',
+  'finalbosu',
+  'genesishero-abstract',
+  'bearish',
+  'fugzfamily',
+  'hamieverse-genesis',
+  'glowbuds',
+  'checkmate-pass-abstract',
+  'pengztracted-abstract',
+  'abstractio',
+];
+
+// Known top tokens that should always appear (symbols)
+const KNOWN_TOP_TOKENS = [
+  'PENGU',
+  'BURR',
+  'BIGHOSS',
+  'PANDA',
+  'LUNA',
+  'MECH',
+  'TYAG',
+  'absETH',
+];
+
+// In-memory cache for last known good data
+interface CacheData {
+  nfts: NFTCollection[];
+  tokens: Token[];
+  timestamp: number;
+}
+
+let dataCache: CacheData | null = null;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+// Validate fetched data against known projects
+function validateNFTData(nfts: NFTCollection[]): { valid: boolean; missingCount: number; missing: string[] } {
+  const fetchedSlugs = new Set(nfts.map(n => n.slug));
+  const missing = KNOWN_TOP_NFTS.filter(slug => !fetchedSlugs.has(slug));
+  // Consider valid only if 75%+ of known top NFTs are present (max 25% missing)
+  const valid = missing.length <= Math.ceil(KNOWN_TOP_NFTS.length * 0.25);
+  return { valid, missingCount: missing.length, missing };
+}
+
+function validateTokenData(tokens: Token[]): { valid: boolean; missingCount: number; missing: string[] } {
+  const fetchedSymbols = new Set(tokens.map(t => t.symbol));
+  const missing = KNOWN_TOP_TOKENS.filter(sym => !fetchedSymbols.has(sym));
+  // Consider valid only if 75%+ of known top tokens are present (max 25% missing)
+  const valid = missing.length <= Math.ceil(KNOWN_TOP_TOKENS.length * 0.25);
+  return { valid, missingCount: missing.length, missing };
+}
+
+// Merge new data with cached data, preferring fresh data but keeping known projects
+function mergeWithCache(
+  newNfts: NFTCollection[],
+  newTokens: Token[],
+  cache: CacheData
+): { nfts: NFTCollection[]; tokens: Token[] } {
+  // For NFTs: keep all new ones, add missing known ones from cache
+  const nftMap = new Map(newNfts.map(n => [n.slug, n]));
+  for (const cachedNft of cache.nfts) {
+    if (KNOWN_TOP_NFTS.includes(cachedNft.slug) && !nftMap.has(cachedNft.slug)) {
+      nftMap.set(cachedNft.slug, cachedNft);
+    }
+  }
+  const mergedNfts = Array.from(nftMap.values())
+    .sort((a, b) => b.marketCap - a.marketCap)
+    .slice(0, 20);
+
+  // For tokens: keep all new ones, add missing known ones from cache
+  const tokenMap = new Map(newTokens.map(t => [t.symbol, t]));
+  for (const cachedToken of cache.tokens) {
+    if (KNOWN_TOP_TOKENS.includes(cachedToken.symbol) && !tokenMap.has(cachedToken.symbol)) {
+      tokenMap.set(cachedToken.symbol, cachedToken);
+    }
+  }
+  const mergedTokens = Array.from(tokenMap.values())
+    .sort((a, b) => b.marketCap - a.marketCap)
+    .slice(0, 20);
+
+  return { nfts: mergedNfts, tokens: mergedTokens };
+}
+
+// ==================== END CACHE SYSTEM ====================
+
 // Hardcoded supply overrides (OpenSea data is often inaccurate)
 const SUPPLY_OVERRIDES: Record<string, number> = {
   'gigaverse-roms-abstract': 10000,
@@ -72,10 +160,12 @@ async function getEthPrice(): Promise<number> {
   return 2500;
 }
 
-// Fetch top NFT collections on Abstract from OpenSea
-async function fetchAbstractNFTs(): Promise<NFTCollection[]> {
+// Fetch top NFT collections on Abstract from OpenSea with retry logic
+async function fetchAbstractNFTs(retryCount = 0): Promise<NFTCollection[]> {
   const collections: NFTCollection[] = [];
   const ethPrice = await getEthPrice();
+  const MAX_RETRIES = 2;
+  const MIN_EXPECTED_RESULTS = 8; // Expect at least this many NFTs
 
   try {
     // OpenSea collection stats endpoint
@@ -86,12 +176,20 @@ async function fetchAbstractNFTs(): Promise<NFTCollection[]> {
           Accept: 'application/json',
           'X-API-KEY': process.env.OPENSEA_API_KEY || '',
         },
+        // Add timeout
+        signal: AbortSignal.timeout(10000),
       }
     );
 
     if (!response.ok) {
       console.log('OpenSea API error:', response.status);
-      return []; // Return empty array instead of mock data
+      // Retry on server errors
+      if (retryCount < MAX_RETRIES && response.status >= 500) {
+        console.log(`Retrying NFT fetch... attempt ${retryCount + 2}`);
+        await new Promise(r => setTimeout(r, 1000)); // Wait 1 second
+        return fetchAbstractNFTs(retryCount + 1);
+      }
+      return [];
     }
 
     const data = await response.json();
@@ -195,129 +293,187 @@ async function fetchAbstractNFTs(): Promise<NFTCollection[]> {
     collections.sort((a, b) => b.marketCap - a.marketCap);
   } catch (err) {
     console.error('Error fetching Abstract NFTs:', err);
-    return []; // Return empty array instead of mock data
+    // Retry on network errors
+    if (retryCount < MAX_RETRIES) {
+      console.log(`Retrying NFT fetch after error... attempt ${retryCount + 2}`);
+      await new Promise(r => setTimeout(r, 1000));
+      return fetchAbstractNFTs(retryCount + 1);
+    }
+    return [];
+  }
+
+  // If we got too few results, retry (might be a partial API response)
+  if (collections.length < MIN_EXPECTED_RESULTS && retryCount < MAX_RETRIES) {
+    console.log(`Only got ${collections.length} NFTs, retrying... attempt ${retryCount + 2}`);
+    await new Promise(r => setTimeout(r, 1000));
+    const retryResults = await fetchAbstractNFTs(retryCount + 1);
+    // Return whichever has more results
+    return retryResults.length > collections.length ? retryResults : collections.slice(0, 20);
   }
 
   return collections.slice(0, 20);
 }
 
-// DexScreener CDN is now used dynamically with the actual token address from the API
-
-// Fetch top tokens on Abstract from GeckoTerminal
-async function fetchAbstractTokens(): Promise<Token[]> {
+// Fetch top tokens on Abstract from DexScreener API (more reliable than GeckoTerminal)
+async function fetchAbstractTokens(retryCount = 0): Promise<Token[]> {
   const tokenMap = new Map<string, Token>();
-  const tokenImages = new Map<string, string>();
+  const MAX_RETRIES = 2;
+  const MIN_EXPECTED_RESULTS = 8;
 
   try {
-    // Fetch multiple pages to get more tokens - use allSettled to handle failures gracefully
-    const pages = [1, 2, 3];
+    // Search for WETH pairs on Abstract to get all tokens
+    // Also search for common Abstract token names
+    // Search multiple queries to find all Abstract tokens
+    const searchQueries = [
+      'abstract', 'pengu', 'BURR', 'BIGHOSS', 'panda', 'luna', 'mech',
+      'abs', 'bearish', 'dreami', 'pengz', 'checkmate', 'tyag', 'polly',
+      'sock', 'meme abstract', 'degen abstract', 'token abstract'
+    ];
+    const allPairs: any[] = [];
 
-    // Helper to fetch with timeout
-    const fetchWithTimeout = async (url: string, timeoutMs: number = 8000) => {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    for (const query of searchQueries) {
       try {
-        const res = await fetch(url, {
-          headers: { Accept: 'application/json' },
-          signal: controller.signal
-        });
-        clearTimeout(timeoutId);
-        return res.ok ? res.json() : null;
+        const response = await fetch(
+          `https://api.dexscreener.com/latest/dex/search?q=${encodeURIComponent(query)}`,
+          {
+            headers: { Accept: 'application/json' },
+            signal: AbortSignal.timeout(8000),
+          }
+        );
+        if (response.ok) {
+          const data = await response.json();
+          const pairs = (data.pairs || []).filter((p: any) => p.chainId === 'abstract');
+          allPairs.push(...pairs);
+        }
       } catch {
-        clearTimeout(timeoutId);
-        return null;
+        // Continue with other queries
       }
-    };
+      // Small delay between requests
+      await new Promise(r => setTimeout(r, 200));
+    }
 
-    const results = await Promise.allSettled(
-      pages.map(page =>
-        fetchWithTimeout(
-          `https://api.geckoterminal.com/api/v2/networks/abstract/trending_pools?page=${page}&include=base_token`
-        )
-      )
+    // Filter to only Abstract chain pairs (dedupe by pair address)
+    const seenPairs = new Set<string>();
+    const abstractPairs = allPairs.filter((p: any) => {
+      if (seenPairs.has(p.pairAddress)) return false;
+      seenPairs.add(p.pairAddress);
+      return true;
+    });
+
+    for (const pair of abstractPairs) {
+      const baseToken = pair.baseToken || {};
+      const tokenName = baseToken.symbol || '';
+      const tokenAddress = baseToken.address || '';
+
+      // Skip stablecoins and wrapped ETH only
+      const skipTokens = ['WETH', 'USDC', 'USDC.e', 'USDT', 'ETH', 'DAI'];
+      if (skipTokens.includes(tokenName)) continue;
+
+      const volume = parseFloat(pair.volume?.h24 || '0');
+      const price = parseFloat(pair.priceUsd || '0');
+      const priceChange24h = parseFloat(pair.priceChange?.h24 || '0');
+      const priceChange1h = parseFloat(pair.priceChange?.h1 || '0');
+      const priceChange6h = parseFloat(pair.priceChange?.h6 || '0');
+      const marketCap = parseFloat(pair.fdv || pair.marketCap || '0');
+
+      // DexScreener image URL
+      const tokenImage = pair.info?.imageUrl
+        || `https://dd.dexscreener.com/ds-data/tokens/abstract/${tokenAddress}.png`;
+
+      const existing = tokenMap.get(tokenName);
+      if (existing) {
+        existing.volume24h += volume;
+        if (marketCap > existing.marketCap) {
+          existing.price = price;
+          existing.priceChange1h = priceChange1h;
+          existing.priceChange24h = priceChange24h;
+          existing.priceChange7d = priceChange6h * 4; // Estimate
+          existing.priceChange30d = priceChange24h * 3; // Estimate
+          existing.marketCap = marketCap;
+          if (pair.info?.imageUrl) {
+            existing.image = pair.info.imageUrl;
+          }
+        }
+      } else {
+        tokenMap.set(tokenName, {
+          name: baseToken.name || tokenName,
+          symbol: tokenName,
+          address: tokenAddress,
+          image: tokenImage,
+          price,
+          priceChange1h,
+          priceChange24h,
+          priceChange7d: priceChange6h * 4,
+          priceChange30d: priceChange24h * 3,
+          volume24h: volume,
+          marketCap,
+          holders: 0,
+        });
+      }
+    }
+  } catch (err) {
+    console.error('Error fetching Abstract tokens from DexScreener:', err);
+    if (retryCount < MAX_RETRIES) {
+      console.log(`Retrying token fetch... attempt ${retryCount + 2}`);
+      await new Promise(r => setTimeout(r, 1000));
+      return fetchAbstractTokens(retryCount + 1);
+    }
+  }
+
+  // Also try GeckoTerminal as secondary source (single request to avoid rate limits)
+  try {
+    const geckoRes = await fetch(
+      'https://api.geckoterminal.com/api/v2/networks/abstract/trending_pools?page=1&include=base_token',
+      {
+        headers: { Accept: 'application/json' },
+        signal: AbortSignal.timeout(8000),
+      }
     );
+    if (geckoRes.ok) {
+      const geckoData = await geckoRes.json();
+      const geckoImages = new Map<string, string>();
 
-    for (const result of results) {
-      if (result.status !== 'fulfilled' || !result.value) continue;
-      const data = result.value;
-
-      // Build a map of token addresses to their images from included data
-      for (const included of (data.included || [])) {
+      // Build image map
+      for (const included of (geckoData.included || [])) {
         if (included.type === 'token' && included.attributes?.image_url) {
-          tokenImages.set(included.id, included.attributes.image_url);
+          geckoImages.set(included.id, included.attributes.image_url);
         }
       }
 
-      for (const pool of (data.data || [])) {
+      for (const pool of (geckoData.data || [])) {
         const attrs = pool.attributes || {};
-
-        // Parse token name from pool name (e.g., "PENGU / WETH 0.3%" -> "PENGU")
         const poolName = attrs.name || '';
         const tokenName = poolName.split(' / ')[0].trim();
 
-        // Skip stablecoins, wrapped ETH, and tokens with most liquidity elsewhere
-        const skipTokens = ['WETH', 'USDC', 'USDC.e', 'USDT', 'ETH', 'DAI', 'PENGU'];
+        const skipTokens = ['WETH', 'USDC', 'USDC.e', 'USDT', 'ETH', 'DAI'];
         if (skipTokens.includes(tokenName)) continue;
 
-        // Get base token address for image lookup
-        const baseTokenId = pool.relationships?.base_token?.data?.id || '';
-        const apiImage = tokenImages.get(baseTokenId) || '';
+        // Only add if not already in map
+        if (!tokenMap.has(tokenName)) {
+          const baseTokenId = pool.relationships?.base_token?.data?.id || '';
+          const tokenAddress = baseTokenId.replace('abstract_', '');
+          const apiImage = geckoImages.get(baseTokenId) || '';
+          const dexScreenerImage = tokenAddress ? `https://dd.dexscreener.com/ds-data/tokens/abstract/${tokenAddress}.png` : '';
 
-        // Extract the actual token contract address (format: "abstract_0x...")
-        const tokenAddress = baseTokenId.replace('abstract_', '');
-
-        // Use token symbol as key for deduplication, aggregate volume
-        const existing = tokenMap.get(tokenName);
-        const volume = parseFloat(attrs.volume_usd?.h24 || '0');
-        const price = parseFloat(attrs.base_token_price_usd || '0');
-        const priceChange = parseFloat(attrs.price_change_percentage?.h24 || '0');
-        const marketCap = parseFloat(attrs.fdv_usd || attrs.market_cap_usd || '0');
-
-        const priceChange1h = parseFloat(attrs.price_change_percentage?.h1 || '0');
-        const priceChange7d = parseFloat(attrs.price_change_percentage?.h24 || '0') * 3;
-        const priceChange30d = priceChange7d * 2;
-
-        // Use API image, then DexScreener CDN with actual token address, then placeholder
-        const dexScreenerImage = tokenAddress ? `https://dd.dexscreener.com/ds-data/tokens/abstract/${tokenAddress}.png` : '';
-        const tokenImage = apiImage
-          || dexScreenerImage
-          || `https://ui-avatars.com/api/?name=${encodeURIComponent(tokenName)}&background=random&color=fff&size=128&bold=true`;
-
-        if (existing) {
-          existing.volume24h += volume;
-          // Update image if we found a real one and existing has placeholder
-          const betterImage = apiImage || dexScreenerImage;
-          if (betterImage && existing.image.includes('ui-avatars')) {
-            existing.image = betterImage;
-          }
-          if (marketCap > existing.marketCap) {
-            existing.price = price;
-            existing.priceChange1h = priceChange1h;
-            existing.priceChange24h = priceChange;
-            existing.priceChange7d = priceChange7d;
-            existing.priceChange30d = priceChange30d;
-            existing.marketCap = marketCap;
-          }
-        } else {
           tokenMap.set(tokenName, {
             name: tokenName,
             symbol: tokenName,
-            address: pool.id || '',
-            image: tokenImage,
-            price,
-            priceChange1h,
-            priceChange24h: priceChange,
-            priceChange7d,
-            priceChange30d,
-            volume24h: volume,
-            marketCap,
+            address: tokenAddress,
+            image: apiImage || dexScreenerImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(tokenName)}&background=random&color=fff&size=128&bold=true`,
+            price: parseFloat(attrs.base_token_price_usd || '0'),
+            priceChange1h: parseFloat(attrs.price_change_percentage?.h1 || '0'),
+            priceChange24h: parseFloat(attrs.price_change_percentage?.h24 || '0'),
+            priceChange7d: parseFloat(attrs.price_change_percentage?.h24 || '0') * 3,
+            priceChange30d: parseFloat(attrs.price_change_percentage?.h24 || '0') * 6,
+            volume24h: parseFloat(attrs.volume_usd?.h24 || '0'),
+            marketCap: parseFloat(attrs.fdv_usd || attrs.market_cap_usd || '0'),
             holders: 0,
           });
         }
       }
     }
-  } catch (err) {
-    console.error('Error fetching Abstract tokens:', err);
+  } catch {
+    // GeckoTerminal failed, continue with DexScreener results
   }
 
   // Convert to array and sort by market cap
@@ -325,7 +481,15 @@ async function fetchAbstractTokens(): Promise<Token[]> {
     .sort((a, b) => b.marketCap - a.marketCap)
     .slice(0, 20);
 
-  return tokens; // Return empty array if no data - no mock data
+  // If we got too few results, retry
+  if (tokens.length < MIN_EXPECTED_RESULTS && retryCount < MAX_RETRIES) {
+    console.log(`Only got ${tokens.length} tokens, retrying... attempt ${retryCount + 2}`);
+    await new Promise(r => setTimeout(r, 1000));
+    const retryResults = await fetchAbstractTokens(retryCount + 1);
+    return retryResults.length > tokens.length ? retryResults : tokens;
+  }
+
+  return tokens;
 }
 
 export async function GET(request: NextRequest) {
@@ -336,6 +500,7 @@ export async function GET(request: NextRequest) {
     let nfts: NFTCollection[] = [];
     let tokens: Token[] = [];
 
+    // Fetch fresh data
     if (type === 'all' || type === 'nfts') {
       nfts = await fetchAbstractNFTs();
     }
@@ -344,13 +509,68 @@ export async function GET(request: NextRequest) {
       tokens = await fetchAbstractTokens();
     }
 
+    // Validate fetched data
+    const nftValidation = validateNFTData(nfts);
+    const tokenValidation = validateTokenData(tokens);
+
+    // Log validation results
+    if (!nftValidation.valid) {
+      console.log(`NFT data validation: missing ${nftValidation.missingCount} known projects:`, nftValidation.missing);
+    }
+    if (!tokenValidation.valid) {
+      console.log(`Token data validation: missing ${tokenValidation.missingCount} known tokens:`, tokenValidation.missing);
+    }
+
+    // If we have cached data and current fetch is missing known projects, merge
+    if (dataCache && (!nftValidation.valid || !tokenValidation.valid)) {
+      const cacheAge = Date.now() - dataCache.timestamp;
+      console.log(`Merging with cached data (age: ${Math.round(cacheAge / 1000)}s)`);
+
+      const merged = mergeWithCache(nfts, tokens, dataCache);
+      nfts = merged.nfts;
+      tokens = merged.tokens;
+    }
+
+    // Update cache if current data looks good
+    if (nftValidation.valid && tokenValidation.valid) {
+      dataCache = {
+        nfts,
+        tokens,
+        timestamp: Date.now(),
+      };
+    } else if (!dataCache) {
+      // Even if not perfect, cache it if we have no cache
+      dataCache = {
+        nfts,
+        tokens,
+        timestamp: Date.now(),
+      };
+    }
+
     return NextResponse.json({
       nfts,
       tokens,
       lastUpdated: new Date().toISOString(),
+      validation: {
+        nfts: { valid: nftValidation.valid, missing: nftValidation.missingCount },
+        tokens: { valid: tokenValidation.valid, missing: tokenValidation.missingCount },
+        usingCache: !nftValidation.valid || !tokenValidation.valid,
+      },
     });
   } catch (error) {
     console.error('Abstract stats error:', error);
+
+    // If we have cache, return it on error
+    if (dataCache) {
+      console.log('Returning cached data due to error');
+      return NextResponse.json({
+        nfts: dataCache.nfts,
+        tokens: dataCache.tokens,
+        lastUpdated: new Date(dataCache.timestamp).toISOString(),
+        validation: { fromCache: true, error: true },
+      });
+    }
+
     return NextResponse.json(
       { error: 'Failed to fetch Abstract stats' },
       { status: 500 }

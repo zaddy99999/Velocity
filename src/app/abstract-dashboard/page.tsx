@@ -770,16 +770,16 @@ export default function AbstractDashboardPage() {
           }}>
             {/* Type Toggle */}
             <div>
-              <span style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.4)', display: 'block', marginBottom: '0.25rem' }}>Type</span>
+              <span style={{ fontSize: '0.65rem', color: '#2edb84', display: 'block', marginBottom: '0.35rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Type</span>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                 <button
                   onClick={() => setActiveTab('nfts')}
                   style={{
                     padding: '0.4rem 0.6rem',
                     borderRadius: '4px',
-                    border: 'none',
-                    background: activeTab === 'nfts' ? '#2edb84' : 'rgba(0,0,0,0.6)',
-                    color: activeTab === 'nfts' ? '#000' : 'rgba(255,255,255,0.6)',
+                    border: activeTab === 'nfts' ? 'none' : '1px solid rgba(46, 219, 132, 0.4)',
+                    background: activeTab === 'nfts' ? '#2edb84' : 'rgba(46, 219, 132, 0.1)',
+                    color: activeTab === 'nfts' ? '#000' : 'rgba(255,255,255,0.9)',
                     fontWeight: 600,
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',
@@ -794,9 +794,9 @@ export default function AbstractDashboardPage() {
                   style={{
                     padding: '0.4rem 0.6rem',
                     borderRadius: '4px',
-                    border: 'none',
-                    background: activeTab === 'tokens' ? '#2edb84' : 'rgba(0,0,0,0.6)',
-                    color: activeTab === 'tokens' ? '#000' : 'rgba(255,255,255,0.6)',
+                    border: activeTab === 'tokens' ? 'none' : '1px solid rgba(46, 219, 132, 0.4)',
+                    background: activeTab === 'tokens' ? '#2edb84' : 'rgba(46, 219, 132, 0.1)',
+                    color: activeTab === 'tokens' ? '#000' : 'rgba(255,255,255,0.9)',
                     fontWeight: 600,
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',
@@ -811,16 +811,16 @@ export default function AbstractDashboardPage() {
 
             {/* Count Toggle */}
             <div>
-              <span style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.4)', display: 'block', marginBottom: '0.25rem' }}>Count</span>
+              <span style={{ fontSize: '0.65rem', color: '#2edb84', display: 'block', marginBottom: '0.35rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Count</span>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                 <button
                   onClick={() => setShowCount(10)}
                   style={{
                     padding: '0.4rem 0.6rem',
                     borderRadius: '4px',
-                    border: 'none',
-                    background: showCount === 10 ? '#2edb84' : 'rgba(0,0,0,0.6)',
-                    color: showCount === 10 ? '#000' : 'rgba(255,255,255,0.6)',
+                    border: showCount === 10 ? 'none' : '1px solid rgba(46, 219, 132, 0.4)',
+                    background: showCount === 10 ? '#2edb84' : 'rgba(46, 219, 132, 0.1)',
+                    color: showCount === 10 ? '#000' : 'rgba(255,255,255,0.9)',
                     fontWeight: 600,
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',
@@ -834,9 +834,9 @@ export default function AbstractDashboardPage() {
                   style={{
                     padding: '0.4rem 0.6rem',
                     borderRadius: '4px',
-                    border: 'none',
-                    background: showCount === 20 ? '#2edb84' : 'rgba(0,0,0,0.6)',
-                    color: showCount === 20 ? '#000' : 'rgba(255,255,255,0.6)',
+                    border: showCount === 20 ? 'none' : '1px solid rgba(46, 219, 132, 0.4)',
+                    background: showCount === 20 ? '#2edb84' : 'rgba(46, 219, 132, 0.1)',
+                    color: showCount === 20 ? '#000' : 'rgba(255,255,255,0.9)',
                     fontWeight: 600,
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',
@@ -850,16 +850,16 @@ export default function AbstractDashboardPage() {
 
             {/* Scale Controls */}
             <div>
-              <span style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.4)', display: 'block', marginBottom: '0.25rem' }}>Scale</span>
+              <span style={{ fontSize: '0.65rem', color: '#2edb84', display: 'block', marginBottom: '0.35rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Scale</span>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                 <button
                   onClick={() => setScaleType('equal')}
                   style={{
                     padding: '0.4rem 0.6rem',
                     borderRadius: '4px',
-                    border: 'none',
-                    background: scaleType === 'equal' ? '#2edb84' : 'rgba(0,0,0,0.6)',
-                    color: scaleType === 'equal' ? '#000' : 'rgba(255,255,255,0.6)',
+                    border: scaleType === 'equal' ? 'none' : '1px solid rgba(46, 219, 132, 0.4)',
+                    background: scaleType === 'equal' ? '#2edb84' : 'rgba(46, 219, 132, 0.1)',
+                    color: scaleType === 'equal' ? '#000' : 'rgba(255,255,255,0.9)',
                     fontWeight: 600,
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',
@@ -874,9 +874,9 @@ export default function AbstractDashboardPage() {
                   style={{
                     padding: '0.4rem 0.6rem',
                     borderRadius: '4px',
-                    border: 'none',
-                    background: scaleType === 'balanced' ? '#2edb84' : 'rgba(0,0,0,0.6)',
-                    color: scaleType === 'balanced' ? '#000' : 'rgba(255,255,255,0.6)',
+                    border: scaleType === 'balanced' ? 'none' : '1px solid rgba(46, 219, 132, 0.4)',
+                    background: scaleType === 'balanced' ? '#2edb84' : 'rgba(46, 219, 132, 0.1)',
+                    color: scaleType === 'balanced' ? '#000' : 'rgba(255,255,255,0.9)',
                     fontWeight: 600,
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',
@@ -891,9 +891,9 @@ export default function AbstractDashboardPage() {
                   style={{
                     padding: '0.4rem 0.6rem',
                     borderRadius: '4px',
-                    border: 'none',
-                    background: scaleType === 'proportional' ? '#2edb84' : 'rgba(0,0,0,0.6)',
-                    color: scaleType === 'proportional' ? '#000' : 'rgba(255,255,255,0.6)',
+                    border: scaleType === 'proportional' ? 'none' : '1px solid rgba(46, 219, 132, 0.4)',
+                    background: scaleType === 'proportional' ? '#2edb84' : 'rgba(46, 219, 132, 0.1)',
+                    color: scaleType === 'proportional' ? '#000' : 'rgba(255,255,255,0.9)',
                     fontWeight: 600,
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',

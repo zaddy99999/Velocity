@@ -6,7 +6,7 @@ import { useState } from 'react';
 
 const mainNavItems = [
   { href: '/', label: 'Social Analytics', icon: '📊' },
-  { href: '/creator-dashboard', label: 'Market Analysis', icon: '📈' },
+  { href: '/market-analysis', label: 'Market Analysis', icon: '📈' },
   { href: '/news', label: 'News Feed', icon: '📰' },
   { href: '/xp-card', label: 'ID Card / XP Card', icon: '🪪' },
   { href: '/meme-generator', label: 'Meme Generator', icon: '🎨' },
@@ -16,6 +16,7 @@ const abstractNavItems = [
   { href: '/abstract-dashboard', label: 'Abstract Dashboard', icon: '🎯' },
   { href: '/tier-maker', label: 'Tier List', icon: '🏆' },
   { href: '/wallet-analytics', label: 'Wallet Analysis', icon: '💰' },
+  { href: '/game-guide-ai', label: 'GameGuideAI', icon: '🎮' },
 ];
 
 export default function NavBar() {

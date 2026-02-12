@@ -310,8 +310,36 @@ async function getExplorerData(module: string, action: string, address: string, 
 // Badge metadata API
 const ABSTRACT_BADGE_METADATA_URL = 'https://abstract-assets.abs.xyz/badges';
 
+// Known badge names and images for faster loading
+const KNOWN_BADGES: Record<string, { name: string; image: string }> = {
+  '1': { name: 'Discord Verified', image: 'https://abstract-assets.abs.xyz/badges/badge-discord.png' },
+  '2': { name: 'X Verified', image: 'https://abstract-assets.abs.xyz/badges/badge-twitter.png' },
+  '3': { name: 'Fund your Account', image: 'https://abstract-assets.abs.xyz/badges/badge-fund-account.png' },
+  '4': { name: 'App Voter', image: 'https://abstract-assets.abs.xyz/badges/badge-app-voter.png' },
+  '5': { name: 'The Trader', image: 'https://abstract-assets.abs.xyz/badges/badge-the-trader.png' },
+  '10': { name: "You're So Early", image: 'https://abstract-assets.abs.xyz/badges/badge-so-early.png' },
+  '16': { name: 'The Sock Master', image: 'https://abstract-assets.abs.xyz/badges/badge-sock-master.png' },
+  '18': { name: 'Roach Racer', image: 'https://abstract-assets.abs.xyz/badges/badge-roach-racing.png' },
+  '22': { name: 'Gacha Goat', image: 'https://abstract-assets.abs.xyz/badges/badge-gacha-goat.png' },
+  '26': { name: 'The Big Badge', image: 'https://abstract-assets.abs.xyz/badges/badge-bigcoin.png' },
+  '27': { name: 'Multiplier Mommy', image: 'https://abstract-assets.abs.xyz/badges/badge-multiplier-mommy.png' },
+  '28': { name: 'Myriad Grand Master', image: 'https://abstract-assets.abs.xyz/badges/badge-myriad-mastermind.png' },
+  '29': { name: 'Giga Juicy', image: 'https://abstract-assets.abs.xyz/badges/badge-giga-juicy.png' },
+  '31': { name: 'Abstract Games Survivor', image: 'https://abstract-assets.abs.xyz/badges/badge-abstract-games-survivor.png' },
+  '42': { name: 'Cambrian Artifact Hunter', image: 'https://abstract-assets.abs.xyz/badges/badge-cambria-gold-rush.png' },
+  '45': { name: 'Email Notification', image: 'https://abstract-assets.abs.xyz/badges/badge-email-notification.png' },
+  '46': { name: 'Speed Trader', image: 'https://abstract-assets.abs.xyz/badges/badge-speed-trader.png' },
+  '48': { name: 'One Year Badge', image: 'https://abstract-assets.abs.xyz/badges/badge-wrapped.png' },
+};
+
 // Fetch badge metadata from Abstract API
 async function fetchBadgeMetadata(tokenId: string): Promise<{ name: string; icon: string; color: string; image?: string }> {
+  // Check known badges first
+  const known = KNOWN_BADGES[tokenId];
+  if (known) {
+    return { name: known.name, icon: '🏅', color: '#2edb84', image: known.image };
+  }
+
   try {
     const res = await fetch(`${ABSTRACT_BADGE_METADATA_URL}/${tokenId}`, {
       headers: {
@@ -509,15 +537,15 @@ function calculateWalletScore(data: {
   // Balance score (max 5 points)
   score += Math.min(5, Math.floor(Math.log10(data.balanceEth + 1) * 2.5));
 
-  // Determine rank
+  // Determine activity grade (not Abstract tier - this is our own score)
   let rank: string;
-  if (score >= 90) rank = 'Legendary';
-  else if (score >= 75) rank = 'Diamond';
-  else if (score >= 60) rank = 'Platinum';
-  else if (score >= 45) rank = 'Gold';
-  else if (score >= 30) rank = 'Silver';
-  else if (score >= 15) rank = 'Bronze';
-  else rank = 'Newcomer';
+  if (score >= 90) rank = 'S';
+  else if (score >= 75) rank = 'A+';
+  else if (score >= 60) rank = 'A';
+  else if (score >= 45) rank = 'B';
+  else if (score >= 30) rank = 'C';
+  else if (score >= 15) rank = 'D';
+  else rank = 'New';
 
   // Calculate percentile based on score
   // Higher score = lower percentile (top X%)
@@ -975,8 +1003,9 @@ export async function GET(request: NextRequest) {
     }
 
     // Count owned NFTs and build holdings list
+    // Sum total NFT balance (not just unique token IDs)
     const ownedNfts = Array.from(nftBalanceMap.values()).filter(v => v.balance > 0);
-    nftCount = ownedNfts.length;
+    nftCount = ownedNfts.reduce((sum, nft) => sum + nft.balance, 0);
 
     // Get collection names for top NFTs (exclude Abstract Badges which are shown separately)
     const nonBadgeNfts = ownedNfts.filter(nft =>

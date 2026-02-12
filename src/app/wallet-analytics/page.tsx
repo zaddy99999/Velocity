@@ -2,10 +2,56 @@
 
 import { useState, useEffect } from 'react';
 import NavBar from '@/components/NavBar';
-import {
-  RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer,
-  PieChart, Pie, Cell, Tooltip
-} from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
+
+// Runescape-style skill calculation from wallet data
+interface WalletSkills {
+  trading: number;      // Trading volume → level
+  collecting: number;   // NFT count → level
+  exploring: number;    // Contracts interacted → level
+  holding: number;      // Balance + age → level
+  speed: number;        // Tx per active day → level
+  badges: number;       // Badge count → level
+  gas: number;          // Gas spent → level
+  profit: number;       // P&L performance → level
+  tokens: number;       // Token diversity → level
+}
+
+function calculateSkillLevels(data: WalletData): WalletSkills {
+  // Convert metrics to levels (1-99 like Runescape)
+  const volumeUsd = parseFloat(data.tradingVolumeUsd?.replace(/[^0-9.]/g, '') || '0');
+  const txPerDay = data.activeDays > 0 ? data.transactionCount / data.activeDays : 0;
+  const profitRatio = data.ethReceived > 0 ? (data.ethReceived - data.ethSent) / data.ethReceived : 0;
+
+  return {
+    trading: Math.min(99, Math.max(1, Math.floor(Math.log10(volumeUsd + 1) * 15))),
+    collecting: Math.min(99, Math.max(1, Math.floor(Math.log10(data.nftCount + 1) * 25))),
+    exploring: Math.min(99, Math.max(1, Math.floor(data.contractsInteracted * 1.5))),
+    holding: Math.min(99, Math.max(1, Math.floor((data.walletAgeDays || 0) / 4))),
+    speed: Math.min(99, Math.max(1, Math.floor(txPerDay * 5))),
+    badges: Math.min(99, Math.max(1, (data.abstractBadgeCount || 0) * 4)),
+    gas: Math.min(99, Math.max(1, Math.floor(parseFloat(data.totalGasUsedUsd?.replace(/[^0-9.]/g, '') || '0') / 2))),
+    profit: Math.min(99, Math.max(1, Math.floor(50 + profitRatio * 49))),
+    tokens: Math.min(99, Math.max(1, data.tokenCount * 3)),
+  };
+}
+
+function getTotalLevel(skills: WalletSkills): number {
+  return Object.values(skills).reduce((sum, level) => sum + level, 0);
+}
+
+// Skill icons (emoji-based for simplicity, can replace with custom icons)
+const SKILL_CONFIG: { key: keyof WalletSkills; name: string; icon: string; color: string }[] = [
+  { key: 'trading', name: 'Trading', icon: '📈', color: '#f1c40f' },
+  { key: 'collecting', name: 'Collecting', icon: '🎨', color: '#9b59b6' },
+  { key: 'exploring', name: 'Exploring', icon: '🧭', color: '#3498db' },
+  { key: 'holding', name: 'Holding', icon: '💎', color: '#1abc9c' },
+  { key: 'speed', name: 'Speed', icon: '⚡', color: '#e74c3c' },
+  { key: 'badges', name: 'Badges', icon: '🏅', color: '#2edb84' },
+  { key: 'gas', name: 'Gas', icon: '⛽', color: '#e67e22' },
+  { key: 'profit', name: 'Profit', icon: '💰', color: '#27ae60' },
+  { key: 'tokens', name: 'Tokens', icon: '🪙', color: '#f39c12' },
+];
 
 interface FavoriteApp {
   address: string;
@@ -86,15 +132,85 @@ interface WalletData {
   error?: string;
 }
 
-const RANK_COLORS: Record<string, string> = {
-  'Legendary': '#f4c542',
-  'Diamond': '#b9f2ff',
-  'Platinum': '#e5e4e2',
-  'Gold': '#ffd700',
-  'Silver': '#c0c0c0',
-  'Bronze': '#cd7f32',
-  'Newcomer': '#888888',
-};
+// Runescape-style skill tile component
+function SkillTile({ skill, level }: { skill: typeof SKILL_CONFIG[0]; level: number }) {
+  return (
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: 52,
+      height: 52,
+      background: 'linear-gradient(180deg, #3d3224 0%, #2a2318 50%, #1a1610 100%)',
+      border: '2px solid #5c4a32',
+      borderRadius: 4,
+      position: 'relative',
+      cursor: 'pointer',
+      transition: 'all 0.15s',
+    }}
+    title={`${skill.name}: Level ${level}`}
+    >
+      <span style={{ fontSize: '1.25rem', marginBottom: 2 }}>{skill.icon}</span>
+      <span style={{
+        fontSize: '0.7rem',
+        fontWeight: 700,
+        color: level >= 99 ? '#ffd700' : level >= 50 ? '#2edb84' : '#c9a959',
+        textShadow: level >= 99 ? '0 0 8px #ffd700' : 'none',
+        fontFamily: 'monospace',
+      }}>
+        {level}
+      </span>
+    </div>
+  );
+}
+
+// Skills panel component (Runescape style)
+function SkillsPanel({ skills }: { skills: WalletSkills }) {
+  const totalLevel = getTotalLevel(skills);
+  const maxTotal = 99 * SKILL_CONFIG.length; // 891 max
+
+  return (
+    <div style={{
+      background: 'linear-gradient(180deg, #4a3c28 0%, #3d3224 100%)',
+      border: '3px solid #5c4a32',
+      borderRadius: 6,
+      padding: '0.75rem',
+      width: 'fit-content',
+    }}>
+      {/* Skills Grid - 3 columns */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(3, 1fr)',
+        gap: 4,
+        marginBottom: '0.5rem',
+      }}>
+        {SKILL_CONFIG.map((skill) => (
+          <SkillTile key={skill.key} skill={skill} level={skills[skill.key]} />
+        ))}
+      </div>
+
+      {/* Total Level */}
+      <div style={{
+        background: '#1a1610',
+        border: '2px solid #5c4a32',
+        borderRadius: 4,
+        padding: '0.35rem',
+        textAlign: 'center',
+      }}>
+        <div style={{ fontSize: '0.6rem', color: '#8b7355', textTransform: 'uppercase' }}>Total level</div>
+        <div style={{
+          fontSize: '1rem',
+          fontWeight: 700,
+          color: totalLevel >= maxTotal * 0.8 ? '#ffd700' : '#c9a959',
+          fontFamily: 'monospace',
+        }}>
+          {totalLevel}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // Pre-cached demo wallet data for instant loading
 const DEMO_WALLET_ADDRESS = '0x0351b76923992c2aFE0f040D22B43Ef0B8773D24';
@@ -156,7 +272,7 @@ const CACHED_DEMO_DATA: WalletData = {
   xeetCardCount: 0,
   nftHoldings: [],
   walletScore: 82,
-  walletRank: "Diamond",
+  walletRank: "A",
   walletPercentile: 3,
   personality: { title: "Master Collector", emoji: "🏆", description: "A true NFT connoisseur with an impressive collection" },
   limitedData: false
@@ -329,45 +445,47 @@ export default function WalletAnalyticsPage() {
           <div className="card" style={{ marginBottom: '1.5rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
               {/* Left: Score Circle */}
-              <div style={{ position: 'relative', width: 90, height: 90, flexShrink: 0 }}>
-                <svg width="90" height="90" style={{ transform: 'rotate(-90deg)' }}>
-                  <circle cx="45" cy="45" r="40" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="6" />
-                  <circle
-                    cx="45" cy="45" r="40" fill="none"
-                    stroke={RANK_COLORS[walletData.walletRank] || '#2edb84'}
-                    strokeWidth="6"
-                    strokeDasharray={`${(walletData.walletScore / 100) * 251.3} 251.3`}
-                    strokeLinecap="round"
-                  />
-                </svg>
-                <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' }}>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 700, color: RANK_COLORS[walletData.walletRank] }}>{walletData.walletScore}</div>
-                  <div style={{ fontSize: '0.55rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>Score</div>
-                </div>
-              </div>
-
-              {/* Middle: Rank, Percentile & Personality */}
-              <div style={{ flex: 1, minWidth: '150px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 700, color: RANK_COLORS[walletData.walletRank], textShadow: `0 0 20px ${RANK_COLORS[walletData.walletRank]}40` }}>
-                    {walletData.walletRank}
-                  </div>
-                  {walletData.walletPercentile && (
-                    <div style={{
-                      padding: '0.25rem 0.6rem',
-                      background: 'rgba(46, 219, 132, 0.15)',
-                      border: '1px solid rgba(46, 219, 132, 0.3)',
-                      borderRadius: '12px',
-                      fontSize: '0.8rem',
-                      fontWeight: 600,
-                      color: '#2edb84',
-                    }}>
-                      Top {walletData.walletPercentile}%
+              {(() => {
+                const scoreColor = walletData.walletScore >= 80 ? '#ffd700' : walletData.walletScore >= 60 ? '#2edb84' : walletData.walletScore >= 40 ? '#3498db' : '#c9a959';
+                return (
+                  <div style={{ position: 'relative', width: 90, height: 90, flexShrink: 0 }}>
+                    <svg width="90" height="90" style={{ transform: 'rotate(-90deg)' }}>
+                      <circle cx="45" cy="45" r="40" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="6" />
+                      <circle
+                        cx="45" cy="45" r="40" fill="none"
+                        stroke={scoreColor}
+                        strokeWidth="6"
+                        strokeDasharray={`${(walletData.walletScore / 100) * 251.3} 251.3`}
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' }}>
+                      <div style={{ fontSize: '1.25rem', fontWeight: 700, color: scoreColor }}>{walletData.walletScore}</div>
+                      <div style={{ fontSize: '0.55rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>Score</div>
                     </div>
-                  )}
-                </div>
+                  </div>
+                );
+              })()}
+
+              {/* Middle: Percentile & Personality */}
+              <div style={{ flex: 1, minWidth: '150px' }}>
+                {walletData.walletPercentile && (
+                  <div style={{
+                    display: 'inline-block',
+                    padding: '0.25rem 0.6rem',
+                    background: 'rgba(46, 219, 132, 0.15)',
+                    border: '1px solid rgba(46, 219, 132, 0.3)',
+                    borderRadius: '12px',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    color: '#2edb84',
+                    marginBottom: '0.5rem',
+                  }}>
+                    Top {walletData.walletPercentile}%
+                  </div>
+                )}
                 {walletData.personality && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.25rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <span style={{ fontSize: '1.25rem' }}>{walletData.personality.emoji}</span>
                     <span style={{ fontSize: '0.9rem', color: '#2edb84', fontWeight: 600 }}>{walletData.personality.title}</span>
                   </div>
@@ -422,16 +540,16 @@ export default function WalletAnalyticsPage() {
                 <div className="wallet-stat-label">Wallet Age</div>
               </div>
               <div className="wallet-stat-card">
-                <div className="wallet-stat-value">{walletData.tokenCount}</div>
-                <div className="wallet-stat-label">Tokens</div>
-              </div>
-              <div className="wallet-stat-card">
-                <div className="wallet-stat-value">{walletData.nftCount}</div>
-                <div className="wallet-stat-label">NFTs</div>
+                <div className="wallet-stat-value">{walletData.nftCount.toLocaleString()}</div>
+                <div className="wallet-stat-label">NFTs Held</div>
               </div>
               <div className="wallet-stat-card">
                 <div className="wallet-stat-value">{walletData.abstractBadgeCount || 0}</div>
                 <div className="wallet-stat-label">Badges</div>
+              </div>
+              <div className="wallet-stat-card">
+                <div className="wallet-stat-value">{walletData.contractsInteracted}</div>
+                <div className="wallet-stat-label">Apps Used</div>
               </div>
               <div className="wallet-stat-card">
                 <div className="wallet-stat-value">{walletData.tradingVolumeUsd}</div>
@@ -606,102 +724,49 @@ export default function WalletAnalyticsPage() {
             )}
           </div>
 
-          {/* Wallet Profile - Radar Chart Only */}
-          <div className="card" style={{ marginBottom: '1.5rem', padding: '1.5rem' }}>
-            <h4 style={{ margin: '0 0 1.5rem 0', fontSize: '1rem', color: '#2edb84', textAlign: 'center' }}>Wallet Profile</h4>
-            <div style={{ height: 300, maxWidth: 400, margin: '0 auto' }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <RadarChart data={[
-                  { metric: 'Transactions', value: Math.min(walletData.transactionCount / 50, 100), fullMark: 100 },
-                  { metric: 'NFTs', value: Math.min(walletData.nftCount / 2, 100), fullMark: 100 },
-                  { metric: 'Tokens', value: Math.min(walletData.tokenCount * 4, 100), fullMark: 100 },
-                  { metric: 'Activity', value: Math.min(walletData.activeDays * 2, 100), fullMark: 100 },
-                  { metric: 'Volume', value: Math.min(parseFloat(walletData.tradingVolumeUsd?.replace(/[^0-9.]/g, '') || '0') / 1000, 100), fullMark: 100 },
-                  { metric: 'Badges', value: Math.min((walletData.abstractBadgeCount || 0) * 5, 100), fullMark: 100 },
-                ]}>
-                  <PolarGrid stroke="rgba(255,255,255,0.1)" />
-                  <PolarAngleAxis
-                    dataKey="metric"
-                    tick={{ fill: 'rgba(255,255,255,0.6)', fontSize: 11 }}
-                  />
-                  <Radar
-                    name="Wallet"
-                    dataKey="value"
-                    stroke="#2edb84"
-                    fill="#2edb84"
-                    fillOpacity={0.3}
-                    strokeWidth={2}
-                  />
-                </RadarChart>
-              </ResponsiveContainer>
+          {/* Skills & Portfolio - Side by Side */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+            {/* Runescape-style Skills Panel */}
+            <div className="card" style={{ padding: '1rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <h4 style={{ margin: '0 0 0.75rem 0', fontSize: '0.9rem', color: '#c9a959', textAlign: 'center', fontFamily: 'monospace' }}>Skills</h4>
+              <SkillsPanel skills={calculateSkillLevels(walletData)} />
             </div>
-          </div>
 
-          {/* Portfolio Tracker */}
-          <div className="card" style={{ marginBottom: '1.5rem', padding: '1.5rem' }}>
-            <h4 style={{ margin: '0 0 1.5rem 0', fontSize: '1rem', color: '#2edb84', textAlign: 'center' }}>Portfolio Estimate</h4>
+            {/* Portfolio Estimate */}
+            <div className="card" style={{ padding: '1.5rem' }}>
+              <h4 style={{ margin: '0 0 1rem 0', fontSize: '1rem', color: '#2edb84', textAlign: 'center' }}>Portfolio Estimate</h4>
 
             {(() => {
               // Estimate portfolio values
               const ethValue = parseFloat(walletData.balanceUsd?.replace(/[^0-9.]/g, '') || '0');
-              const nftEstValue = walletData.nftCount * 25; // ~$25 avg floor estimate for Abstract NFTs
-              const tokenEstValue = walletData.tokenCount * 10; // ~$10 avg per token type held
-              const totalValue = ethValue + nftEstValue + tokenEstValue;
+              const nftEstValue = walletData.nftCount * 15; // ~$15 avg floor estimate for Abstract NFTs
+              const totalValue = ethValue + nftEstValue;
 
               const portfolioData = [
                 { name: 'ETH', value: ethValue, color: '#627eea', percent: totalValue > 0 ? (ethValue / totalValue * 100).toFixed(1) : '0' },
                 { name: 'NFTs', value: nftEstValue, color: '#00cccc', percent: totalValue > 0 ? (nftEstValue / totalValue * 100).toFixed(1) : '0' },
-                { name: 'Tokens', value: tokenEstValue, color: '#2edb84', percent: totalValue > 0 ? (tokenEstValue / totalValue * 100).toFixed(1) : '0' },
               ];
 
               return (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', alignItems: 'center' }}>
+                <div style={{ textAlign: 'center' }}>
                   {/* Total Value */}
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', marginBottom: '0.5rem' }}>Estimated Total Value</div>
-                    <div style={{ fontSize: '2.5rem', fontWeight: 700, color: '#fff', textShadow: '0 0 30px rgba(46, 219, 132, 0.3)' }}>
-                      ${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </div>
-                    <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.5rem' }}>
-                      Based on current holdings
-                    </div>
-
-                    {/* Breakdown bars */}
-                    <div style={{ marginTop: '1.5rem' }}>
-                      {portfolioData.map((item, i) => (
-                        <div key={i} style={{ marginBottom: '0.75rem' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '0.25rem' }}>
-                            <span style={{ color: item.color, fontWeight: 600 }}>{item.name}</span>
-                            <span style={{ color: 'rgba(255,255,255,0.7)' }}>${item.value.toLocaleString()} ({item.percent}%)</span>
-                          </div>
-                          <div style={{ height: 6, background: 'rgba(255,255,255,0.1)', borderRadius: 3, overflow: 'hidden' }}>
-                            <div style={{
-                              height: '100%',
-                              width: `${item.percent}%`,
-                              background: item.color,
-                              borderRadius: 3,
-                              transition: 'width 0.5s ease'
-                            }} />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                  <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)', marginBottom: '0.25rem' }}>Estimated Total</div>
+                  <div style={{ fontSize: '2rem', fontWeight: 700, color: '#fff', textShadow: '0 0 20px rgba(46, 219, 132, 0.3)' }}>
+                    ${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </div>
 
                   {/* Pie Chart */}
-                  <div style={{ height: 220 }}>
+                  <div style={{ height: 140, margin: '0.5rem 0' }}>
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
                           data={portfolioData.filter(d => d.value > 0)}
                           cx="50%"
                           cy="50%"
-                          innerRadius={60}
-                          outerRadius={90}
+                          innerRadius={40}
+                          outerRadius={60}
                           paddingAngle={2}
                           dataKey="value"
-                          label={({ name, percent }) => `${name} ${percent}%`}
-                          labelLine={{ stroke: 'rgba(255,255,255,0.3)' }}
                         >
                           {portfolioData.filter(d => d.value > 0).map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={entry.color} />
@@ -714,16 +779,64 @@ export default function WalletAnalyticsPage() {
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
+
+                  {/* Breakdown bars */}
+                  <div>
+                    {portfolioData.map((item, i) => (
+                      <div key={i} style={{ marginBottom: '0.5rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', marginBottom: '0.2rem' }}>
+                          <span style={{ color: item.color, fontWeight: 600 }}>{item.name}</span>
+                          <span style={{ color: 'rgba(255,255,255,0.7)' }}>${item.value.toLocaleString()} ({item.percent}%)</span>
+                        </div>
+                        <div style={{ height: 5, background: 'rgba(255,255,255,0.1)', borderRadius: 3, overflow: 'hidden' }}>
+                          <div style={{
+                            height: '100%',
+                            width: `${item.percent}%`,
+                            background: item.color,
+                            borderRadius: 3,
+                          }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               );
             })()}
 
-            {/* Top Holdings */}
-            <div style={{ marginTop: '1.5rem' }}>
-              <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', marginBottom: '0.75rem' }}>Top Holdings</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {/* ETH Balance */}
-                <div style={{
+            </div>
+          </div>
+
+          {/* Top Holdings & P&L */}
+          <div className="card" style={{ marginBottom: '1.5rem', padding: '1.5rem' }}>
+            <h4 style={{ margin: '0 0 1rem 0', fontSize: '1rem', color: '#2edb84' }}>Top Holdings</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {/* ETH Balance */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '0.75rem',
+                background: 'rgba(255,255,255,0.03)',
+                borderRadius: 8,
+                border: '1px solid rgba(255,255,255,0.08)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg, #627eea, #3c3c3d)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem' }}>
+                    Ξ
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#fff' }}>Ethereum</div>
+                    <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)' }}>{walletData.balanceFormatted}</div>
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#fff' }}>{walletData.balanceUsd}</div>
+                </div>
+              </div>
+
+              {/* Top NFT Holdings */}
+              {walletData.nftHoldings && walletData.nftHoldings.slice(0, 4).map((nft) => (
+                <div key={`${nft.contractAddress}-${nft.tokenId}`} style={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
@@ -733,69 +846,43 @@ export default function WalletAnalyticsPage() {
                   border: '1px solid rgba(255,255,255,0.08)'
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg, #627eea, #3c3c3d)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem' }}>
-                      Ξ
-                    </div>
+                    {nft.image ? (
+                      <img src={nft.image} alt={nft.name} style={{ width: 32, height: 32, borderRadius: 6, objectFit: 'cover' }} />
+                    ) : (
+                      <div style={{ width: 32, height: 32, borderRadius: 6, background: 'linear-gradient(135deg, #00cccc, #2edb84)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: '#fff', fontWeight: 600 }}>
+                        NFT
+                      </div>
+                    )}
                     <div>
-                      <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#fff' }}>Ethereum</div>
-                      <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)' }}>{walletData.balanceFormatted}</div>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#fff' }}>{nft.collectionName}</div>
+                      <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)' }}>{nft.count > 1 ? `${nft.count} NFTs` : nft.name}</div>
                     </div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#fff' }}>{walletData.balanceUsd}</div>
+                    {nft.estimatedValueUsd ? (
+                      <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#2edb84' }}>
+                        ${nft.estimatedValueUsd.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: '0.75rem', color: '#00cccc' }}>{nft.count} held</div>
+                    )}
                   </div>
                 </div>
+              ))}
 
-                {/* Top NFT Holdings */}
-                {walletData.nftHoldings && walletData.nftHoldings.slice(0, 4).map((nft, i) => (
-                  <div key={`${nft.contractAddress}-${nft.tokenId}`} style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '0.75rem',
-                    background: 'rgba(255,255,255,0.03)',
-                    borderRadius: 8,
-                    border: '1px solid rgba(255,255,255,0.08)'
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      {nft.image ? (
-                        <img src={nft.image} alt={nft.name} style={{ width: 32, height: 32, borderRadius: 6, objectFit: 'cover' }} />
-                      ) : (
-                        <div style={{ width: 32, height: 32, borderRadius: 6, background: 'linear-gradient(135deg, #00cccc, #2edb84)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: '#fff', fontWeight: 600 }}>
-                          NFT
-                        </div>
-                      )}
-                      <div>
-                        <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#fff' }}>{nft.name}</div>
-                        <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)' }}>{nft.collectionName}</div>
-                      </div>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      {nft.estimatedValueUsd ? (
-                        <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#2edb84' }}>
-                          ${nft.estimatedValueUsd.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                        </div>
-                      ) : (
-                        <div style={{ fontSize: '0.75rem', color: '#00cccc' }}>NFT</div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-
-                {(!walletData.nftHoldings || walletData.nftHoldings.length === 0) && walletData.nftCount > 0 && (
-                  <div style={{
-                    padding: '0.75rem',
-                    background: 'rgba(255,255,255,0.03)',
-                    borderRadius: 8,
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    textAlign: 'center',
-                    color: 'rgba(255,255,255,0.5)',
-                    fontSize: '0.8rem'
-                  }}>
-                    {walletData.nftCount} NFTs in collection
-                  </div>
-                )}
-              </div>
+              {(!walletData.nftHoldings || walletData.nftHoldings.length === 0) && walletData.nftCount > 0 && (
+                <div style={{
+                  padding: '0.75rem',
+                  background: 'rgba(255,255,255,0.03)',
+                  borderRadius: 8,
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  textAlign: 'center',
+                  color: 'rgba(255,255,255,0.5)',
+                  fontSize: '0.8rem'
+                }}>
+                  {walletData.nftCount} NFTs in collection
+                </div>
+              )}
             </div>
 
             {/* P&L Summary */}

@@ -299,29 +299,55 @@ export async function GET(request: Request) {
       }]);
     }
 
+    // Try to get any recent digest first as fallback
+    let fallbackDigest: DigestData | null = null;
+    try {
+      const recentDigests = await getLatestDigests(mode, 1);
+      if (recentDigests.length > 0) {
+        fallbackDigest = recentDigests[0];
+      }
+    } catch (err) {
+      console.error('Error fetching fallback digest:', err);
+    }
+
     // Generate new digest
     const allNews = await fetchAllNews(mode);
 
     if (allNews.length === 0) {
-      // Try to return any recent digest from sheets
-      try {
-        const recentDigests = await getLatestDigests(mode, 1);
-        if (recentDigests.length > 0) {
-          const d = recentDigests[0];
-          return NextResponse.json([{
-            date: d.id,
-            dateLabel: d.dateLabel,
-            summary: d.summary,
-            summaryUrl: d.summaryUrl,
-            sections: d.sections.map(s => ({ title: '', content: s.content, url: s.url, category: s.category, featured: s.featured })),
-            generatedAt: d.generatedAt,
-          }]);
-        }
-      } catch {}
-      return NextResponse.json({ error: 'No news fetched' }, { status: 500 });
+      console.log(`No news fetched for ${mode} mode, checking fallback...`);
+      // Return cached digest if available
+      if (fallbackDigest) {
+        console.log('Returning fallback digest:', fallbackDigest.id);
+        return NextResponse.json([{
+          date: fallbackDigest.id,
+          dateLabel: fallbackDigest.dateLabel,
+          summary: fallbackDigest.summary,
+          summaryUrl: fallbackDigest.summaryUrl,
+          sections: fallbackDigest.sections.map(s => ({ title: '', content: s.content, url: s.url, category: s.category, featured: s.featured })),
+          generatedAt: fallbackDigest.generatedAt,
+        }]);
+      }
+      return NextResponse.json({ error: 'No news available' }, { status: 500 });
     }
 
-    const newDigest = await generateDigest(mode, allNews);
+    let newDigest: DigestData;
+    try {
+      newDigest = await generateDigest(mode, allNews);
+    } catch (genError) {
+      console.error('Digest generation failed:', genError);
+      // Return fallback if generation fails
+      if (fallbackDigest) {
+        return NextResponse.json([{
+          date: fallbackDigest.id,
+          dateLabel: fallbackDigest.dateLabel,
+          summary: fallbackDigest.summary,
+          summaryUrl: fallbackDigest.summaryUrl,
+          sections: fallbackDigest.sections.map(s => ({ title: '', content: s.content, url: s.url, category: s.category, featured: s.featured })),
+          generatedAt: fallbackDigest.generatedAt,
+        }]);
+      }
+      throw genError;
+    }
 
     return NextResponse.json([{
       date: newDigest.id,
