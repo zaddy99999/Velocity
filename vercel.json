@@ -1,4 +1,11 @@
 {
+  "redirects": [
+    {
+      "source": "/creator-dashboard",
+      "destination": "/market-analysis",
+      "permanent": true
+    }
+  ],
   "crons": [
     {
       "path": "/api/run",
