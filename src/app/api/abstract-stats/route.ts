@@ -201,13 +201,7 @@ async function fetchAbstractNFTs(): Promise<NFTCollection[]> {
   return collections.length > 0 ? collections.slice(0, 20) : getMockNFTData();
 }
 
-// Known token logos for Abstract chain (fallbacks if API doesn't have them)
-const TOKEN_LOGOS: Record<string, string> = {
-  'BURR': 'https://dd.dexscreener.com/ds-data/tokens/abstract/0x555c816637633d916c053d37a8e7d84f5fecec3a.png',
-  'BIGHOSS': 'https://dd.dexscreener.com/ds-data/tokens/abstract/0x2c86cac88f2c62d80f416844e0bd41f32e579f32.png',
-  'GRIND': 'https://dd.dexscreener.com/ds-data/tokens/abstract/0x4d42cd39c42c0b9fc5732075a2c3c0e2e6b3c8f9.png',
-  'GROW': 'https://dd.dexscreener.com/ds-data/tokens/abstract/0x5e4f4c03b4f82e3c383f8f6c4e75c5e9f6e4d3c2.png',
-};
+// DexScreener CDN is now used dynamically with the actual token address from the API
 
 // Fetch top tokens on Abstract from GeckoTerminal
 async function fetchAbstractTokens(): Promise<Token[]> {
@@ -269,6 +263,9 @@ async function fetchAbstractTokens(): Promise<Token[]> {
         const baseTokenId = pool.relationships?.base_token?.data?.id || '';
         const apiImage = tokenImages.get(baseTokenId) || '';
 
+        // Extract the actual token contract address (format: "abstract_0x...")
+        const tokenAddress = baseTokenId.replace('abstract_', '');
+
         // Use token symbol as key for deduplication, aggregate volume
         const existing = tokenMap.get(tokenName);
         const volume = parseFloat(attrs.volume_usd?.h24 || '0');
@@ -280,15 +277,16 @@ async function fetchAbstractTokens(): Promise<Token[]> {
         const priceChange7d = parseFloat(attrs.price_change_percentage?.h24 || '0') * 3;
         const priceChange30d = priceChange7d * 2;
 
-        // Use API image, then hardcoded logos, then DexScreener, then placeholder
+        // Use API image, then DexScreener CDN with actual token address, then placeholder
+        const dexScreenerImage = tokenAddress ? `https://dd.dexscreener.com/ds-data/tokens/abstract/${tokenAddress}.png` : '';
         const tokenImage = apiImage
-          || TOKEN_LOGOS[tokenName.toUpperCase()]
+          || dexScreenerImage
           || `https://ui-avatars.com/api/?name=${encodeURIComponent(tokenName)}&background=random&color=fff&size=128&bold=true`;
 
         if (existing) {
           existing.volume24h += volume;
           // Update image if we found a real one and existing has placeholder
-          const betterImage = apiImage || TOKEN_LOGOS[tokenName.toUpperCase()];
+          const betterImage = apiImage || dexScreenerImage;
           if (betterImage && existing.image.includes('ui-avatars')) {
             existing.image = betterImage;
           }
