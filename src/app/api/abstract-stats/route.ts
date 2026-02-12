@@ -330,15 +330,16 @@ async function fetchAbstractTokens(): Promise<Token[]> {
 
 // Mock data for when APIs fail
 function getMockNFTData(): NFTCollection[] {
+  // Mock data with Abstract chain NFTs only
   return [
-    { name: 'Pudgy Penguins', slug: 'pudgy-penguins', image: '', floorPrice: 12.5, floorPriceUsd: 25000, marketCap: 222200000, volume24h: 450, volumeChange24h: 15.2, volumeChange7d: 8.5, volumeChange30d: 25.0, sales24h: 89, owners: 4521, supply: 8888 },
-    { name: 'Abstract Punks', slug: 'abstract-punks', image: '', floorPrice: 2.1, floorPriceUsd: 4200, marketCap: 21000000, volume24h: 120, volumeChange24h: -5.3, volumeChange7d: 12.1, volumeChange30d: -8.2, sales24h: 45, owners: 2100, supply: 5000 },
-    { name: 'Abstract Apes', slug: 'abstract-apes', image: '', floorPrice: 0.85, floorPriceUsd: 1700, marketCap: 17000000, volume24h: 85, volumeChange24h: 22.1, volumeChange7d: -3.4, volumeChange30d: 45.0, sales24h: 112, owners: 3200, supply: 10000 },
-    { name: 'Lil Pudgys', slug: 'lil-pudgys', image: '', floorPrice: 0.45, floorPriceUsd: 900, marketCap: 40000000, volume24h: 65, volumeChange24h: 8.5, volumeChange7d: 15.2, volumeChange30d: 32.1, sales24h: 156, owners: 5800, supply: 22222 },
-    { name: 'Abstract Badges', slug: 'abstract-badges', image: '', floorPrice: 0, floorPriceUsd: 0, marketCap: 0, volume24h: 0, volumeChange24h: 0, volumeChange7d: 0, volumeChange30d: 0, sales24h: 0, owners: 150000, supply: 500000 },
-    { name: 'Abstract Worlds', slug: 'abstract-worlds', image: '', floorPrice: 0.32, floorPriceUsd: 640, marketCap: 1920000, volume24h: 28, volumeChange24h: -12.4, volumeChange7d: -8.1, volumeChange30d: -22.5, sales24h: 34, owners: 890, supply: 3000 },
-    { name: 'Pixel Penguins', slug: 'pixel-penguins', image: '', floorPrice: 0.18, floorPriceUsd: 360, marketCap: 1800000, volume24h: 15, volumeChange24h: 45.0, volumeChange7d: 28.3, volumeChange30d: 120.0, sales24h: 67, owners: 1200, supply: 5000 },
-    { name: 'Abstract Genesis', slug: 'abstract-genesis', image: '', floorPrice: 5.2, floorPriceUsd: 10400, marketCap: 10400000, volume24h: 180, volumeChange24h: 3.2, volumeChange7d: -1.5, volumeChange30d: 15.8, sales24h: 22, owners: 450, supply: 1000 },
+    { name: 'Gigaverse ROMs', slug: 'gigaverse-roms-abstract', image: 'https://i.seadn.io/s/raw/files/3f63e9c0f9e0f0c4b9d3c3c0e0c5c0c3.png', floorPrice: 0.15, floorPriceUsd: 375, marketCap: 3750000, volume24h: 120, volumeChange24h: 15.2, volumeChange7d: 8.5, volumeChange30d: 25.0, sales24h: 89, owners: 4521, supply: 10000 },
+    { name: 'FinalBosu', slug: 'finalbosu', image: 'https://i.seadn.io/s/raw/files/finalbosu.png', floorPrice: 0.08, floorPriceUsd: 200, marketCap: 1776000, volume24h: 85, volumeChange24h: -5.3, volumeChange7d: 12.1, volumeChange30d: -8.2, sales24h: 45, owners: 2100, supply: 8888 },
+    { name: 'Hamieverse Genesis', slug: 'hamieverse-genesis', image: 'https://i.seadn.io/s/raw/files/hamieverse.png', floorPrice: 0.25, floorPriceUsd: 625, marketCap: 555000, volume24h: 65, volumeChange24h: 22.1, volumeChange7d: -3.4, volumeChange30d: 45.0, sales24h: 112, owners: 650, supply: 888 },
+    { name: 'GlowBuds', slug: 'glowbuds', image: 'https://i.seadn.io/s/raw/files/glowbuds.png', floorPrice: 0.05, floorPriceUsd: 125, marketCap: 416625, volume24h: 45, volumeChange24h: 8.5, volumeChange7d: 15.2, volumeChange30d: 32.1, sales24h: 156, owners: 1800, supply: 3333 },
+    { name: 'Abstract Badges', slug: 'abstract-badges', image: 'https://abstract-assets.abs.xyz/badges/badge-discord.png', floorPrice: 0, floorPriceUsd: 0, marketCap: 0, volume24h: 0, volumeChange24h: 0, volumeChange7d: 0, volumeChange30d: 0, sales24h: 0, owners: 150000, supply: 500000 },
+    { name: 'Checkmate Pass', slug: 'checkmate-pass-abstract', image: 'https://i.seadn.io/s/raw/files/checkmate.png', floorPrice: 0.12, floorPriceUsd: 300, marketCap: 999600, volume24h: 28, volumeChange24h: -12.4, volumeChange7d: -8.1, volumeChange30d: -22.5, sales24h: 34, owners: 890, supply: 3333 },
+    { name: 'Wolf Game', slug: 'wolf-game', image: 'https://i.seadn.io/s/raw/files/wolfgame.png', floorPrice: 0.03, floorPriceUsd: 75, marketCap: 468525, volume24h: 15, volumeChange24h: 45.0, volumeChange7d: 28.3, volumeChange30d: 120.0, sales24h: 67, owners: 1200, supply: 6247 },
+    { name: 'Abstractio', slug: 'abstractio', image: 'https://i.seadn.io/s/raw/files/abstractio.png', floorPrice: 0.04, floorPriceUsd: 100, marketCap: 333300, volume24h: 22, volumeChange24h: 3.2, volumeChange7d: -1.5, volumeChange30d: 15.8, sales24h: 22, owners: 450, supply: 3333 },
   ];
 }
 
