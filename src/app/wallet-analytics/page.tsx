@@ -132,31 +132,31 @@ interface WalletData {
   error?: string;
 }
 
-// Runescape-style skill tile component
+// Authentic OSRS-style skill tile component
 function SkillTile({ skill, level }: { skill: typeof SKILL_CONFIG[0]; level: number }) {
   return (
     <div style={{
       display: 'flex',
-      flexDirection: 'column',
       alignItems: 'center',
-      justifyContent: 'center',
-      width: 52,
-      height: 52,
-      background: 'linear-gradient(180deg, #3d3224 0%, #2a2318 50%, #1a1610 100%)',
-      border: '2px solid #5c4a32',
-      borderRadius: 4,
-      position: 'relative',
+      justifyContent: 'space-between',
+      width: 62,
+      height: 26,
+      background: '#3e3529',
+      borderTop: '1px solid #4a4035',
+      borderLeft: '1px solid #4a4035',
+      borderRight: '1px solid #201c17',
+      borderBottom: '1px solid #201c17',
+      padding: '0 4px',
       cursor: 'pointer',
-      transition: 'all 0.15s',
     }}
     title={`${skill.name}: Level ${level}`}
     >
-      <span style={{ fontSize: '1.25rem', marginBottom: 2 }}>{skill.icon}</span>
+      <span style={{ fontSize: '1rem', lineHeight: 1 }}>{skill.icon}</span>
       <span style={{
-        fontSize: '0.7rem',
-        fontWeight: 700,
-        color: level >= 99 ? '#ffd700' : level >= 50 ? '#2edb84' : '#c9a959',
-        textShadow: level >= 99 ? '0 0 8px #ffd700' : 'none',
+        fontSize: '0.8rem',
+        fontWeight: 400,
+        color: level >= 99 ? '#00ff00' : '#ffff00',
+        textShadow: '1px 1px 0 #000',
         fontFamily: 'monospace',
       }}>
         {level}
@@ -165,47 +165,56 @@ function SkillTile({ skill, level }: { skill: typeof SKILL_CONFIG[0]; level: num
   );
 }
 
-// Skills panel component (Runescape style)
+// Authentic OSRS Skills panel component
 function SkillsPanel({ skills }: { skills: WalletSkills }) {
   const totalLevel = getTotalLevel(skills);
-  const maxTotal = 99 * SKILL_CONFIG.length; // 891 max
 
   return (
     <div style={{
-      background: 'linear-gradient(180deg, #4a3c28 0%, #3d3224 100%)',
-      border: '3px solid #5c4a32',
-      borderRadius: 6,
-      padding: '0.75rem',
+      background: '#3e3529',
+      border: '2px solid #474034',
+      borderRadius: 0,
+      padding: 0,
       width: 'fit-content',
+      boxShadow: 'inset 1px 1px 0 #4a4035, inset -1px -1px 0 #201c17',
     }}>
-      {/* Skills Grid - 3 columns */}
+      {/* Outer frame - darker border */}
       <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(3, 1fr)',
-        gap: 4,
-        marginBottom: '0.5rem',
+        background: '#252116',
+        padding: 2,
       }}>
-        {SKILL_CONFIG.map((skill) => (
-          <SkillTile key={skill.key} skill={skill} level={skills[skill.key]} />
-        ))}
-      </div>
-
-      {/* Total Level */}
-      <div style={{
-        background: '#1a1610',
-        border: '2px solid #5c4a32',
-        borderRadius: 4,
-        padding: '0.35rem',
-        textAlign: 'center',
-      }}>
-        <div style={{ fontSize: '0.6rem', color: '#8b7355', textTransform: 'uppercase' }}>Total level</div>
+        {/* Inner content area */}
         <div style={{
-          fontSize: '1rem',
-          fontWeight: 700,
-          color: totalLevel >= maxTotal * 0.8 ? '#ffd700' : '#c9a959',
-          fontFamily: 'monospace',
+          background: '#3e3529',
+          border: '1px solid #4a4035',
         }}>
-          {totalLevel}
+          {/* Skills Grid - 3 columns */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: 0,
+          }}>
+            {SKILL_CONFIG.map((skill) => (
+              <SkillTile key={skill.key} skill={skill} level={skills[skill.key]} />
+            ))}
+          </div>
+
+          {/* Total Level Bar */}
+          <div style={{
+            background: '#2d2820',
+            borderTop: '1px solid #201c17',
+            padding: '4px 8px',
+            textAlign: 'center',
+          }}>
+            <span style={{
+              fontSize: '0.75rem',
+              color: '#ff981f',
+              fontFamily: 'monospace',
+              textShadow: '1px 1px 0 #000',
+            }}>
+              Total level: <span style={{ color: '#ffff00' }}>{totalLevel}</span>
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -407,8 +416,8 @@ export default function WalletAnalyticsPage() {
             <p style={{ margin: 0, fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)' }}>Analyze any wallet on Abstract L2</p>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
-          <div style={{ flex: 1, minWidth: '300px' }}>
+        <div className="wallet-input-row">
+          <div className="wallet-input-field">
             <label style={{ display: 'block', marginBottom: '0.5rem', color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem' }}>
               Wallet Address
             </label>
@@ -526,7 +535,7 @@ export default function WalletAnalyticsPage() {
             )}
 
             {/* Stats Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem', marginTop: '1rem' }}>
+            <div className="wallet-stats-grid" style={{ marginTop: '1rem' }}>
               <div className="wallet-stat-card">
                 <div className="wallet-stat-value">{walletData.transactionCount.toLocaleString()}</div>
                 <div className="wallet-stat-label">Transactions</div>
@@ -725,7 +734,7 @@ export default function WalletAnalyticsPage() {
           </div>
 
           {/* Skills & Portfolio - Side by Side */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+          <div className="wallet-skills-portfolio-grid" style={{ marginBottom: '1.5rem' }}>
             {/* Runescape-style Skills Panel */}
             <div className="card" style={{ padding: '1rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <h4 style={{ margin: '0 0 0.75rem 0', fontSize: '0.9rem', color: '#c9a959', textAlign: 'center', fontFamily: 'monospace' }}>Skills</h4>
@@ -893,7 +902,7 @@ export default function WalletAnalyticsPage() {
               borderRadius: 12,
               border: `1px solid ${walletData.isProfitable ? 'rgba(46, 219, 132, 0.2)' : 'rgba(231, 76, 60, 0.2)'}`
             }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', textAlign: 'center' }}>
+              <div className="wallet-pnl-grid">
                 <div>
                   <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.5)', marginBottom: '0.25rem' }}>Total Received</div>
                   <div style={{ fontSize: '1rem', fontWeight: 600, color: '#2edb84' }}>{walletData.ethReceivedUsd}</div>

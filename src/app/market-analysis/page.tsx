@@ -1,12 +1,18 @@
 'use client';
 
 import { useMemo } from 'react';
+import dynamic from 'next/dynamic';
 import NavBar from '@/components/NavBar';
-import DraggableDashboard from '@/components/DraggableDashboard';
-import { GlobalMetrics, FearGreedIndex, TopMovers, CoinRankings, MindshareBubbles, ChainFlows, VCFunding, NetFlows, NFTLeaderboard, SectorPerformance, WhaleAlerts, UpcomingEvents, PriceChart } from '@/components/crypto';
+import { GlobalMetrics, FearGreedIndex, TopMovers, CoinRankings, ChainFlows, VCFunding, NetFlows, NFTLeaderboard, SectorPerformance, WhaleAlerts, UpcomingEvents, PriceChart } from '@/components/crypto';
 import { useCryptoPrices, useGlobalMetrics, useNews, useChains } from '@/lib/crypto/hooks';
 
-export default function CreatorDashboard() {
+// Dynamically import DraggableDashboard to avoid SSR issues with dnd-kit
+const DraggableDashboard = dynamic(() => import('@/components/DraggableDashboard'), { ssr: false });
+
+// Dynamically import MindshareBubbles separately as it might have issues
+const MindshareBubbles = dynamic(() => import('@/components/crypto/MindshareBubbles').then(mod => ({ default: mod.default })), { ssr: false });
+
+export default function MarketAnalysisPage() {
   const { prices, isLoading: pricesLoading, lastUpdated: pricesUpdated } = useCryptoPrices();
   const { global, fearGreed, gas, isLoading: globalLoading, lastUpdated: globalUpdated } = useGlobalMetrics();
   const { news, isLoading: newsLoading } = useNews();
@@ -35,10 +41,9 @@ export default function CreatorDashboard() {
             <img src="/ZaddyPFP.png" alt="Logo" style={{ width: 56, height: 56, borderRadius: '10px', border: '2px solid rgba(46, 219, 132, 0.3)' }} />
             <div>
               <h1 style={{ marginBottom: 0 }}>ZaddyTools</h1>
-              <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem', margin: 0 }}>Crypto Dashboard</p>
+              <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem', margin: 0 }}>Market Analysis</p>
             </div>
           </div>
-
           <NavBar />
         </div>
       </div>
@@ -52,7 +57,7 @@ export default function CreatorDashboard() {
         </div>
 
         {/* Draggable modules */}
-        <DraggableDashboard modules={modules} storageKey="zaddytools-dashboard-order" />
+        <DraggableDashboard modules={modules} storageKey="zaddytools-market-analysis-order" />
       </div>
     </main>
   );

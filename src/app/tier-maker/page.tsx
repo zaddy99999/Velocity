@@ -43,6 +43,19 @@ export default function TierMaker() {
   const [expanded, setExpanded] = useState(false);
   const tierListRef = useRef<HTMLDivElement>(null);
 
+  // Mobile selection state
+  const [isMobile, setIsMobile] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<TierItem | null>(null);
+  const [selectedSource, setSelectedSource] = useState<string | null>(null);
+
+  // Detect mobile
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   // Show toast message that auto-dismisses
   const showToast = (message: string) => {
     setToast(message);
@@ -110,11 +123,62 @@ export default function TierMaker() {
     ? ['Creator', 'Founder', 'Streamer', 'Gamer', 'Other']
     : ['NFT + Game', 'Defi', 'NFT', 'Game', 'Social', 'Infrastructure', 'Other', 'Memecoins'];
 
-  // Open Twitter profile on click
+  // Open Twitter profile on click (desktop only)
   const openTwitterProfile = (handle: string) => {
     // Extract handle from id if it has a prefix
     const cleanHandle = handle.replace(/^twitter-/, '').replace(/-\d+$/, '');
     window.open(`https://x.com/${cleanHandle}`, '_blank');
+  };
+
+  // Mobile: handle item click - select it
+  const handleItemClick = (item: TierItem, source: string) => {
+    if (isMobile) {
+      // If same item clicked, deselect
+      if (selectedItem?.id === item.id) {
+        setSelectedItem(null);
+        setSelectedSource(null);
+      } else {
+        setSelectedItem(item);
+        setSelectedSource(source);
+        showToast(`Selected: ${item.name} - tap a tier to place`);
+      }
+    } else {
+      // Desktop: open Twitter
+      openTwitterProfile(item.id);
+    }
+  };
+
+  // Mobile: handle tier click - place selected item
+  const handleTierClick = (tierId: string) => {
+    if (!isMobile || !selectedItem) return;
+
+    // Check for Elisa
+    let targetTierId = tierId;
+    if (selectedItem.id.toLowerCase() === 'eeelistar' && tierId !== 's') {
+      showToast('Elisa is the GOAT, she can only be added to S tier 🐐');
+      targetTierId = 's';
+    }
+
+    // Remove from source
+    if (selectedSource === 'unranked') {
+      setUnrankedItems(prev => prev.filter(i => i.id !== selectedItem.id));
+    } else {
+      setTiers(prev => prev.map(tier => ({
+        ...tier,
+        items: tier.items.filter(i => i.id !== selectedItem.id)
+      })));
+    }
+
+    // Add to target tier
+    setTiers(prev => prev.map(tier =>
+      tier.id === targetTierId
+        ? { ...tier, items: [...tier.items, selectedItem] }
+        : tier
+    ));
+
+    // Clear selection
+    setSelectedItem(null);
+    setSelectedSource(null);
   };
 
   // Group unranked items by category
@@ -303,9 +367,10 @@ export default function TierMaker() {
           {tiers.map((tier) => (
             <div
               key={tier.id}
-              className="tier-row"
+              className={`tier-row ${isMobile && selectedItem ? 'tap-target' : ''}`}
               onDragOver={handleDragOver}
               onDrop={() => handleDropOnTier(tier.id)}
+              onClick={() => handleTierClick(tier.id)}
             >
               <div
                 className="tier-label"
@@ -317,10 +382,13 @@ export default function TierMaker() {
                 {tier.items.map((item) => (
                   <div
                     key={item.id}
-                    className="tier-item"
-                    draggable
+                    className={`tier-item ${selectedItem?.id === item.id ? 'selected' : ''}`}
+                    draggable={!isMobile}
                     onDragStart={() => handleDragStart(item, tier.id)}
-                    onClick={() => openTwitterProfile(item.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleItemClick(item, tier.id);
+                    }}
                   >
                     <img
                       src={item.image}
@@ -412,10 +480,10 @@ export default function TierMaker() {
                 {group.items.map((item) => (
                   <div
                     key={item.id}
-                    className="tier-item"
-                    draggable
+                    className={`tier-item ${selectedItem?.id === item.id ? 'selected' : ''}`}
+                    draggable={!isMobile}
                     onDragStart={() => handleDragStart(item, 'unranked')}
-                    onClick={() => openTwitterProfile(item.id)}
+                    onClick={() => handleItemClick(item, 'unranked')}
                   >
                     <img
                       src={item.image}

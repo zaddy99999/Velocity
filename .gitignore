@@ -46,3 +46,4 @@ coverage/
 !package-lock.json
 !tsconfig.json
 !vercel.json
+CLAUDE.md

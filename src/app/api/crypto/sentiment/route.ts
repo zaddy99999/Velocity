@@ -25,26 +25,51 @@ export async function GET() {
     let ethFunding = 0;
     let liquidations24h = { long: 0, short: 0 };
 
-    // Try CoinGlass public API for liquidations and OI
+    // Try Binance API for funding rates (more reliable)
     try {
-      const coinglassRes = await fetch('https://open-api.coinglass.com/public/v2/indicator/funding', {
-        headers: { 'Accept': 'application/json' }
-      });
-      if (coinglassRes.ok) {
-        const cgData = await coinglassRes.json();
-        if (cgData.data) {
-          const btcData = cgData.data.find((d: any) => d.symbol === 'BTC');
-          if (btcData) {
-            btcFunding = btcData.uMarginList?.[0]?.rate || 0;
-          }
-          const ethData = cgData.data.find((d: any) => d.symbol === 'ETH');
-          if (ethData) {
-            ethFunding = ethData.uMarginList?.[0]?.rate || 0;
-          }
+      const [btcRes, ethRes] = await Promise.all([
+        fetch('https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&limit=1'),
+        fetch('https://fapi.binance.com/fapi/v1/fundingRate?symbol=ETHUSDT&limit=1')
+      ]);
+
+      if (btcRes.ok) {
+        const btcData = await btcRes.json();
+        if (btcData[0]?.fundingRate) {
+          btcFunding = parseFloat(btcData[0].fundingRate);
+        }
+      }
+      if (ethRes.ok) {
+        const ethData = await ethRes.json();
+        if (ethData[0]?.fundingRate) {
+          ethFunding = parseFloat(ethData[0].fundingRate);
         }
       }
     } catch (e) {
-      console.error('CoinGlass funding error:', e);
+      console.error('Binance funding error:', e);
+    }
+
+    // Fallback to CoinGlass if Binance fails
+    if (btcFunding === 0) {
+      try {
+        const coinglassRes = await fetch('https://open-api.coinglass.com/public/v2/indicator/funding', {
+          headers: { 'Accept': 'application/json' }
+        });
+        if (coinglassRes.ok) {
+          const cgData = await coinglassRes.json();
+          if (cgData.data) {
+            const btcData = cgData.data.find((d: any) => d.symbol === 'BTC');
+            if (btcData) {
+              btcFunding = btcData.uMarginList?.[0]?.rate || 0;
+            }
+            const ethData = cgData.data.find((d: any) => d.symbol === 'ETH');
+            if (ethData) {
+              ethFunding = ethData.uMarginList?.[0]?.rate || 0;
+            }
+          }
+        }
+      } catch (e) {
+        console.error('CoinGlass funding error:', e);
+      }
     }
 
     // Try Alternative.me Fear & Greed for sentiment proxy

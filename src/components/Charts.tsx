@@ -228,13 +228,41 @@ const CustomTooltip = ({ active, payload }: any) => {
 };
 
 // Custom tick component to show logos with click support
-const CustomXAxisTick = ({ x, y, payload, index }: any) => {
+const CustomXAxisTick = ({ x, y, payload, index, visibleTicksCount }: any) => {
   const data = payload.value;
   const parts = data?.split('|||') || [];
   const fullName = parts[0] || '';
   const logoUrl = parts[1] || '';
   const channelUrl = parts[2] || '';
   const rank = index + 1;
+
+  // Responsive sizing based on number of items and screen width
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const itemCount = visibleTicksCount || 15;
+
+  // Scale down logo size on mobile or when many items
+  let logoSize = 36;
+  let containerSize = 40;
+  let fontSize = 9;
+  let nameMaxLen = 10;
+
+  if (isMobile) {
+    if (itemCount > 10) {
+      logoSize = 20;
+      containerSize = 24;
+      fontSize = 6;
+      nameMaxLen = 6;
+    } else {
+      logoSize = 28;
+      containerSize = 32;
+      fontSize = 7;
+      nameMaxLen = 8;
+    }
+  } else if (itemCount > 12) {
+    logoSize = 30;
+    containerSize = 34;
+    fontSize = 8;
+  }
 
   const handleClick = () => {
     if (channelUrl) {
@@ -243,7 +271,7 @@ const CustomXAxisTick = ({ x, y, payload, index }: any) => {
   };
 
   // Smarter name splitting
-  const splitName = (name: string, maxLen: number = 10): string[] => {
+  const splitName = (name: string, maxLen: number = nameMaxLen): string[] => {
     if (name.length <= maxLen) return [name];
     const words = name.split(' ');
     const lines: string[] = [];
@@ -258,43 +286,47 @@ const CustomXAxisTick = ({ x, y, payload, index }: any) => {
       }
     }
     if (currentLine) lines.push(currentLine);
-    return lines.slice(0, 2);
+    return lines.slice(0, isMobile ? 1 : 2);
   };
 
   const nameLines = splitName(fullName);
+  const halfContainer = containerSize / 2;
+  const logoOffset = (containerSize - logoSize) / 2;
 
   return (
     <g transform={`translate(${x},${y})`} onClick={handleClick} style={{ cursor: channelUrl ? 'pointer' : 'default' }}>
-      {/* Rank badge */}
-      <text
-        x={0}
-        y={8}
-        textAnchor="middle"
-        fill="#444"
-        fontSize={9}
-        fontWeight={600}
-        fontFamily="JetBrains Mono, monospace"
-      >
-        #{rank}
-      </text>
+      {/* Rank badge - hide on mobile with many items */}
+      {!(isMobile && itemCount > 10) && (
+        <text
+          x={0}
+          y={8}
+          textAnchor="middle"
+          fill="#444"
+          fontSize={fontSize}
+          fontWeight={600}
+          fontFamily="JetBrains Mono, monospace"
+        >
+          #{rank}
+        </text>
+      )}
       {logoUrl && (
         <>
           <rect
-            x={-20}
-            y={14}
-            width={40}
-            height={40}
+            x={-halfContainer}
+            y={isMobile && itemCount > 10 ? 4 : 14}
+            width={containerSize}
+            height={containerSize}
             fill="rgba(255,255,255,0.03)"
             stroke="rgba(255,255,255,0.1)"
             strokeWidth={1}
-            rx={6}
+            rx={4}
           />
           <image
             href={logoUrl}
-            x={-18}
-            y={16}
-            width={36}
-            height={36}
+            x={-halfContainer + logoOffset}
+            y={(isMobile && itemCount > 10 ? 4 : 14) + logoOffset}
+            width={logoSize}
+            height={logoSize}
             preserveAspectRatio="xMidYMid slice"
             clipPath="inset(0 round 4px)"
           />
@@ -304,10 +336,10 @@ const CustomXAxisTick = ({ x, y, payload, index }: any) => {
         <text
           key={i}
           x={0}
-          y={logoUrl ? 68 + (i * 12) : 24 + (i * 12)}
+          y={logoUrl ? (isMobile && itemCount > 10 ? 4 : 14) + containerSize + 12 + (i * (fontSize + 2)) : 24 + (i * 12)}
           textAnchor="middle"
           fill="rgba(255,255,255,0.7)"
-          fontSize={9}
+          fontSize={fontSize}
           fontWeight={500}
           fontFamily="Inter, system-ui, sans-serif"
         >

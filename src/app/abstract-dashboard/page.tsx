@@ -741,9 +741,9 @@ export default function AbstractDashboardPage() {
         </div>
 
         {/* Heatmap + All Controls on Right */}
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
+        <div className="abstract-heatmap-layout">
           {/* Heatmap Container */}
-          <div style={{ flex: 1 }}>
+          <div className="abstract-heatmap-container">
             {loading ? (
               <div style={{
                 display: 'flex',
@@ -762,12 +762,7 @@ export default function AbstractDashboardPage() {
           </div>
 
           {/* All Controls - Right Side */}
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '0.75rem',
-            paddingTop: '0.25rem',
-          }}>
+          <div className="abstract-heatmap-controls">
             {/* Type Toggle */}
             <div>
               <span style={{ fontSize: '0.65rem', color: '#2edb84', display: 'block', marginBottom: '0.35rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Type</span>
@@ -910,12 +905,7 @@ export default function AbstractDashboardPage() {
       </div>
 
       {/* Leaderboard Section - Side by Side */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
-        gap: '1rem',
-        marginTop: '1.5rem',
-      }}>
+      <div className="abstract-leaderboard-grid">
         {/* NFT Leaderboard */}
         <div style={{
           background: '#000',

@@ -17,29 +17,46 @@ export default function Home() {
   const [channels, setChannels] = useState<ChannelDisplayData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile on mount
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Chart tab state
   const [activeTab, setActiveTab] = useState<ChartTab>('giphy');
+
+  // Default count based on screen size
+  const defaultCount = isMobile ? 8 : 15;
 
   // GIPHY chart state
   const [giphyCategory, setGiphyCategory] = useState<'all' | 'web2' | 'web3' | 'abstract'>('web3');
   const [giphyScaleType, setGiphyScaleType] = useState<'linear' | 'sqrt' | 'log'>('sqrt');
   const [giphyTimePeriod, setGiphyTimePeriod] = useState<'daily' | 'weekly' | 'monthly' | 'yearly' | 'alltime'>('alltime');
-  const [giphyChartCount, setGiphyChartCount] = useState<number>(15);
+  const [giphyChartCount, setGiphyChartCount] = useState<number | null>(null);
 
   // TikTok chart state
   const [tiktokCategory, setTiktokCategory] = useState<'all' | 'web2' | 'web3' | 'abstract'>('web3');
-  const [tiktokChartCount, setTiktokChartCount] = useState<number>(15);
+  const [tiktokChartCount, setTiktokChartCount] = useState<number | null>(null);
   const [tiktokMetric, setTiktokMetric] = useState<'followers' | 'likes'>('followers');
   const [tiktokTimePeriod, setTiktokTimePeriod] = useState<'daily' | 'weekly' | 'monthly' | 'yearly' | 'alltime'>('alltime');
   const [tiktokScaleType, setTiktokScaleType] = useState<'linear' | 'sqrt' | 'log'>('sqrt');
 
   // YouTube chart state
   const [youtubeCategory, setYoutubeCategory] = useState<'all' | 'web2' | 'web3' | 'abstract'>('web3');
-  const [youtubeChartCount, setYoutubeChartCount] = useState<number>(15);
+  const [youtubeChartCount, setYoutubeChartCount] = useState<number | null>(null);
   const [youtubeMetric, setYoutubeMetric] = useState<'subscribers' | 'views'>('subscribers');
   const [youtubeScaleType, setYoutubeScaleType] = useState<'linear' | 'sqrt' | 'log'>('sqrt');
   const [youtubeTimePeriod, setYoutubeTimePeriod] = useState<'daily' | 'weekly' | 'monthly' | 'yearly' | 'alltime'>('alltime');
+
+  // Actual chart counts (use state if set, otherwise use default)
+  const actualGiphyCount = giphyChartCount ?? defaultCount;
+  const actualTiktokCount = tiktokChartCount ?? defaultCount;
+  const actualYoutubeCount = youtubeChartCount ?? defaultCount;
 
   // Table filter state
   const [tableCategory, setTableCategory] = useState<'all' | 'web2' | 'web3' | 'abstract'>('web3');
@@ -297,35 +314,35 @@ export default function Home() {
       </div>
 
       {/* Chart Section with Tabs */}
-      <div className="chart-section" style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem' }}>
-        {/* Left Tab Navigation - Compact */}
-        <div className="chart-tabs">
+      <div className="chart-section-wrapper">
+        {/* Platform Tab Navigation - Horizontal on mobile, vertical on desktop */}
+        <div className="platform-tabs">
           <button
-            className={`chart-tab ${activeTab === 'giphy' ? 'active' : ''}`}
+            className={`platform-tab ${activeTab === 'giphy' ? 'active' : ''}`}
             onClick={() => setActiveTab('giphy')}
           >
             <svg className="tab-icon-svg" viewBox="0 0 24 24" fill="currentColor">
               <path d="M2 6h4v12H2zm6-4h4v20H8zm6 6h4v8h-4zm6-2h4v12h-4z"/>
             </svg>
-            GIPHY
+            <span>GIPHY</span>
           </button>
           <button
-            className={`chart-tab ${activeTab === 'tiktok' ? 'active' : ''}`}
+            className={`platform-tab ${activeTab === 'tiktok' ? 'active' : ''}`}
             onClick={() => setActiveTab('tiktok')}
           >
             <svg className="tab-icon-svg" viewBox="0 0 24 24" fill="currentColor">
               <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
             </svg>
-            TikTok
+            <span>TikTok</span>
           </button>
           <button
-            className={`chart-tab ${activeTab === 'youtube' ? 'active' : ''}`}
+            className={`platform-tab ${activeTab === 'youtube' ? 'active' : ''}`}
             onClick={() => setActiveTab('youtube')}
           >
             <svg className="tab-icon-svg" viewBox="0 0 24 24" fill="currentColor">
               <path d="M23.5 6.19a3.02 3.02 0 0 0-2.12-2.14C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.38.55A3.02 3.02 0 0 0 .5 6.19 31.6 31.6 0 0 0 0 12a31.6 31.6 0 0 0 .5 5.81 3.02 3.02 0 0 0 2.12 2.14c1.88.55 9.38.55 9.38.55s7.5 0 9.38-.55a3.02 3.02 0 0 0 2.12-2.14A31.6 31.6 0 0 0 24 12a31.6 31.6 0 0 0-.5-5.81zM9.55 15.5V8.5l6.27 3.5-6.27 3.5z"/>
             </svg>
-            YouTube
+            <span>YouTube</span>
           </button>
         </div>
 
@@ -380,10 +397,11 @@ export default function Home() {
                     <span className="control-label">Show</span>
                     <select
                       className="filter-select"
-                      value={giphyChartCount}
+                      value={actualGiphyCount}
                       onChange={(e) => setGiphyChartCount(Number(e.target.value))}
                     >
                       <option value={5}>5</option>
+                      <option value={8}>8</option>
                       <option value={10}>10</option>
                       <option value={15}>15</option>
                       <option value={20}>20</option>
@@ -392,7 +410,7 @@ export default function Home() {
                 </div>
               </div>
               <div className="chart-container">
-                <TotalViewsChart channels={giphyFilteredChannels} scaleType={giphyScaleType} timePeriod={giphyTimePeriod} count={giphyChartCount} />
+                <TotalViewsChart channels={giphyFilteredChannels} scaleType={giphyScaleType} timePeriod={giphyTimePeriod} count={actualGiphyCount} />
               </div>
             </>
           )}
@@ -463,10 +481,11 @@ export default function Home() {
                     <span className="control-label">Show</span>
                     <select
                       className="filter-select"
-                      value={tiktokChartCount}
+                      value={actualTiktokCount}
                       onChange={(e) => setTiktokChartCount(Number(e.target.value))}
                     >
                       <option value={5}>5</option>
+                      <option value={8}>8</option>
                       <option value={10}>10</option>
                       <option value={15}>15</option>
                       <option value={20}>20</option>
@@ -476,9 +495,9 @@ export default function Home() {
               </div>
               <div className="chart-container">
                 {tiktokMetric === 'followers' ? (
-                  <TikTokFollowersChart channels={tiktokFilteredChannels} count={tiktokChartCount} scaleType={tiktokScaleType} />
+                  <TikTokFollowersChart channels={tiktokFilteredChannels} count={actualTiktokCount} scaleType={tiktokScaleType} />
                 ) : (
-                  <TikTokLikesChart channels={tiktokFilteredChannels} count={tiktokChartCount} scaleType={tiktokScaleType} />
+                  <TikTokLikesChart channels={tiktokFilteredChannels} count={actualTiktokCount} scaleType={tiktokScaleType} />
                 )}
               </div>
             </>
@@ -550,10 +569,11 @@ export default function Home() {
                     <span className="control-label">Show</span>
                     <select
                       className="filter-select"
-                      value={youtubeChartCount}
+                      value={actualYoutubeCount}
                       onChange={(e) => setYoutubeChartCount(Number(e.target.value))}
                     >
                       <option value={5}>5</option>
+                      <option value={8}>8</option>
                       <option value={10}>10</option>
                       <option value={15}>15</option>
                       <option value={20}>20</option>
@@ -563,9 +583,9 @@ export default function Home() {
               </div>
               <div className="chart-container">
                 {youtubeMetric === 'subscribers' ? (
-                  <YouTubeSubscribersChart channels={youtubeFilteredChannels} count={youtubeChartCount} scaleType={youtubeScaleType} />
+                  <YouTubeSubscribersChart channels={youtubeFilteredChannels} count={actualYoutubeCount} scaleType={youtubeScaleType} />
                 ) : (
-                  <YouTubeViewsChart channels={youtubeFilteredChannels} count={youtubeChartCount} scaleType={youtubeScaleType} />
+                  <YouTubeViewsChart channels={youtubeFilteredChannels} count={actualYoutubeCount} scaleType={youtubeScaleType} />
                 )}
               </div>
             </>
@@ -574,7 +594,7 @@ export default function Home() {
       </div>
 
       {/* Table */}
-      <div className="card" style={{ marginLeft: 'calc(100px + 0.75rem)' }}>
+      <div className="card table-card">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
           <h2 style={{ marginBottom: 0 }}>🎯 All Channels ({tableFilteredChannels.length})</h2>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
