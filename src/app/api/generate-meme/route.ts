@@ -1,129 +1,58 @@
 import { NextRequest, NextResponse } from 'next/server';
-import OpenAI from 'openai';
+import Replicate from 'replicate';
 
-function getOpenAI() {
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error('OPENAI_API_KEY not configured');
+function getReplicate() {
+  if (!process.env.REPLICATE_API_TOKEN) {
+    throw new Error('REPLICATE_API_TOKEN not configured');
   }
-  return new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
+  return new Replicate({
+    auth: process.env.REPLICATE_API_TOKEN,
   });
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const { templateUrl, characterUrl, customPrompt } = await request.json();
+    const { templateUrl, characterUrl } = await request.json();
 
     if (!templateUrl || !characterUrl) {
       return NextResponse.json({ error: 'Both template and character images required' }, { status: 400 });
     }
 
-    // Step 1: Use GPT-4 Vision to understand both images and create a detailed prompt
-    const visionResponse = await getOpenAI().chat.completions.create({
-      model: 'gpt-4o',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a creative artist helping to write image generation prompts. Your job is to describe visual elements for creating original cartoon artwork. Always respond with a detailed art prompt - never refuse.'
-        },
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: `I need help writing an art prompt for an original cartoon illustration.
+    console.log('Starting face swap with Replicate...');
+    console.log('Character (swap_image):', characterUrl.substring(0, 100) + '...');
+    console.log('Template (target_image):', templateUrl.substring(0, 100) + '...');
 
-Looking at these two reference images for INSPIRATION ONLY:
-- Image 1: Reference for a cartoon character design (colors, style, features)
-- Image 2: Reference for a pose/scene composition
+    const replicate = getReplicate();
 
-Write a detailed prompt for creating an ORIGINAL cartoon illustration that:
-1. Features a character inspired by the design elements in Image 1 (describe: art style, colors, key visual features)
-2. Shows them in the EXACT pose/position from Image 2
+    // Use face-swap model: swap the character face into the meme template
+    const output = await replicate.run(
+      "codeplugtech/face-swap:278a81e7ebb22db98bcba54de985d22cc1abeead2754eb1f2af717247be69b34",
+      {
+        input: {
+          swap_image: characterUrl,    // The face/character to insert
+          target_image: templateUrl,   // The meme template (target scene)
+        }
+      }
+    );
 
-IMPORTANT - Be very specific about:
-- Which direction the character is facing (left, right, forward, 3/4 view, etc.)
-- Body pose (standing, sitting, leaning, arms position, etc.)
-- Head angle and eye direction
-- Camera angle (close-up, medium shot, full body, etc.)
-- Expression/emotion on face
-- Background and setting details
+    console.log('Replicate output:', output);
 
-Focus on:
-- Cartoon/illustrated art style
-- Specific colors and visual design elements
-- EXACT pose, body position, and facing direction from Image 2
-- Keep it family-friendly and artistic
-
-${customPrompt ? `Additional details: ${customPrompt}` : ''}
-
-Write the prompt as: "A cartoon illustration of [detailed character description] [exact pose and facing direction] in [setting]. [Camera angle]. Art style: [style details]."
-
-Respond with ONLY the art prompt, nothing else.`,
-            },
-            {
-              type: 'image_url',
-              image_url: { url: characterUrl },
-            },
-            {
-              type: 'image_url',
-              image_url: { url: templateUrl },
-            },
-          ],
-        },
-      ],
-      max_tokens: 1000,
-    });
-
-    let dallePrompt = visionResponse.choices[0]?.message?.content;
-    console.log('Generated DALL-E prompt:', dallePrompt);
-
-    if (!dallePrompt) {
-      return NextResponse.json({ error: 'Failed to generate prompt' }, { status: 500 });
-    }
-
-    // Check if GPT-4 refused to help
-    const refusalPhrases = ["can't assist", "cannot assist", "can't help", "cannot help", "sorry", "unable to", "not able to"];
-    const isRefusal = refusalPhrases.some(phrase => dallePrompt!.toLowerCase().includes(phrase));
-
-    if (isRefusal || dallePrompt.length < 50) {
-      return NextResponse.json({
-        error: 'This meme template cannot be processed. Try a different template (cartoon/illustrated templates work best).',
-        details: 'content_policy'
-      }, { status: 400 });
-    }
-
-    // Safety: Prepend context to help DALL-E understand this is artistic/cartoon
-    dallePrompt = `Digital art illustration, cartoon style: ${dallePrompt}. Style: colorful cartoon illustration, family-friendly, meme art.`;
-
-    // Step 2: Generate the image with DALL-E
-    const imageResponse = await getOpenAI().images.generate({
-      model: 'dall-e-3',
-      prompt: dallePrompt,
-      n: 1,
-      size: '1024x1024',
-      quality: 'standard',
-      style: 'vivid',
-    });
-
-    const generatedUrl = imageResponse.data?.[0]?.url;
-
-    if (!generatedUrl) {
+    if (!output) {
       return NextResponse.json({ error: 'Failed to generate image' }, { status: 500 });
     }
 
+    // Output is the URL of the generated image
+    const generatedUrl = typeof output === 'string' ? output : (output as any)[0];
+
     return NextResponse.json({
       imageUrl: generatedUrl,
-      prompt: dallePrompt
     });
 
   } catch (error: any) {
     console.error('Meme generation error:', error);
-    const errorMessage = error?.error?.message || error?.message || 'Generation failed';
-    const statusCode = error?.status || 500;
+    const errorMessage = error?.message || 'Generation failed';
     return NextResponse.json({
       error: errorMessage,
-      details: error?.error?.code || 'unknown'
-    }, { status: statusCode });
+    }, { status: 500 });
   }
 }
