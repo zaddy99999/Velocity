@@ -27,23 +27,32 @@ export async function POST(request: NextRequest) {
           content: [
             {
               type: 'text',
-              text: `You are a meme recreation expert. I'm giving you two images:
+              text: `You are creating a DALL-E prompt to recreate a meme with a different character.
 
-IMAGE 1 (Character): This is the character/person I want to INSERT into the meme.
-IMAGE 2 (Meme Template): This is the popular meme format I want to recreate.
+IMAGE 1: The CHARACTER to use (analyze this carefully - note every visual detail)
+IMAGE 2: The MEME TEMPLATE to recreate (the scene/pose to copy)
 
-Your task: Write a DALL-E prompt that recreates the meme template EXACTLY - same composition, pose, background, lighting, style, and visual elements - but with the character from Image 1 swapped in as the main subject.
+STEP 1 - Describe the CHARACTER from Image 1 in extreme detail:
+- What type of character is it? (cartoon, pixel art, anime, photo, mascot, etc.)
+- Exact colors (skin/fur color, clothing colors, any accessories)
+- Distinctive features (hat, glasses, expression, pose, style)
+- Art style (flat colors, gradients, realistic, cartoon, etc.)
 
-Key requirements:
-- Preserve the EXACT pose, angle, and body position from the meme template
-- Keep the background, setting, and all environmental details identical
-- Maintain the same art style, lighting, and mood
-- The character from Image 1 should be recognizable but posed exactly like the original meme subject
-- Include any iconic visual elements that make this meme recognizable
+STEP 2 - Describe the MEME TEMPLATE from Image 2:
+- What is the scene/setting?
+- What pose/action is the subject doing?
+- What makes this meme recognizable?
+- Background details, lighting, composition
+
+STEP 3 - Write a DALL-E prompt that:
+- Places the EXACT character from Image 1 (with all their specific visual features) into the scene from Image 2
+- The character must look IDENTICAL to Image 1 - same colors, same style, same features
+- The pose/scene must match Image 2 exactly
+- Keep the same art style as Image 1 (don't make a cartoon realistic or vice versa)
 
 ${customPrompt ? `Additional instructions: ${customPrompt}` : ''}
 
-Return ONLY the DALL-E prompt, nothing else. Be specific and detailed.`,
+Return ONLY the final DALL-E prompt. Be extremely specific about the character's appearance so DALL-E recreates them accurately.`,
             },
             {
               type: 'image_url',

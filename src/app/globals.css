@@ -862,10 +862,6 @@ th.sortable:hover {
   width: 60px;
 }
 
-.sidebar.collapsed:hover {
-  width: 200px;
-}
-
 .sidebar-brand {
   padding: 0.75rem;
   display: flex;
@@ -938,10 +934,6 @@ th.sortable:hover {
   opacity: 0;
 }
 
-.sidebar.collapsed:hover .sidebar-label {
-  opacity: 1;
-}
-
 .sidebar-divider {
   height: 1px;
   background: rgba(46, 219, 132, 0.15);
@@ -965,10 +957,6 @@ th.sortable:hover {
   opacity: 0;
 }
 
-.sidebar.collapsed:hover .sidebar-section {
-  opacity: 1;
-}
-
 .sidebar-footer {
   padding: 0.75rem;
   border-top: 1px solid rgba(46, 219, 132, 0.15);
@@ -989,6 +977,8 @@ th.sortable:hover {
 
 /* Toggle button for sidebar */
 .sidebar-toggle {
+  position: relative;
+  z-index: 10;
   margin-left: auto;
   width: 24px;
   height: 24px;
@@ -1023,15 +1013,6 @@ th.sortable:hover {
   height: 40px;
   padding: 0 !important;
   justify-content: center;
-}
-
-.sidebar.collapsed:hover .wallet-text {
-  display: inline;
-}
-
-.sidebar.collapsed:hover .wallet-connect-btn {
-  width: auto;
-  padding: 0.5rem 0.75rem !important;
 }
 
 /* Mobile: hide sidebar, show mobile menu */
@@ -10106,6 +10087,7 @@ html {
     rgba(46, 219, 132, 0.3),
     transparent
   );
+  pointer-events: none;
 }
 
 .sidebar-link {
