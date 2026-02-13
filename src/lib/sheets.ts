@@ -887,16 +887,30 @@ function extractUrls(text: string): string[] {
   return matches.map(url => url.trim().replace(/[,;]$/, '')); // Clean trailing punctuation
 }
 
+// Convert Google Docs URL to export format
+function convertGoogleDocUrl(url: string): string {
+  // Match Google Docs URL pattern
+  const docMatch = url.match(/docs\.google\.com\/document\/d\/([a-zA-Z0-9_-]+)/);
+  if (docMatch) {
+    const docId = docMatch[1];
+    return `https://docs.google.com/document/d/${docId}/export?format=txt`;
+  }
+  return url;
+}
+
 // Fetch content from a URL (GitBook, docs sites, etc.) with caching
 async function fetchDocContent(url: string): Promise<string> {
+  // Convert Google Docs URLs to export format
+  const fetchUrl = convertGoogleDocUrl(url);
+
   // Check cache first
-  const cached = urlContentCache.get(url);
+  const cached = urlContentCache.get(fetchUrl);
   if (cached && (Date.now() - cached.fetchedAt) < CACHE_TTL) {
-    console.log(`Using cached content for ${url}`);
+    console.log(`Using cached content for ${fetchUrl}`);
     return cached.content;
   }
   try {
-    const response = await fetch(url, {
+    const response = await fetch(fetchUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; ZaddyTools/1.0)',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -943,10 +957,10 @@ async function fetchDocContent(url: string): Promise<string> {
       text = text.substring(0, 15000) + '\n\n[Content truncated...]';
     }
 
-    console.log(`Fetched ${text.length} chars from ${url}`);
+    console.log(`Fetched ${text.length} chars from ${fetchUrl}`);
 
-    // Cache the result
-    urlContentCache.set(url, { content: text, fetchedAt: Date.now() });
+    // Cache the result (use original URL as key for consistency)
+    urlContentCache.set(fetchUrl, { content: text, fetchedAt: Date.now() });
 
     return text;
   } catch (error) {
