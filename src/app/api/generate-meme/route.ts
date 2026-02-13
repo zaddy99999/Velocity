@@ -39,17 +39,25 @@ Looking at these two reference images for INSPIRATION ONLY:
 
 Write a detailed prompt for creating an ORIGINAL cartoon illustration that:
 1. Features a character inspired by the design elements in Image 1 (describe: art style, colors, key visual features)
-2. Shows them in a pose/scene composition inspired by Image 2 (describe: the action, setting, composition)
+2. Shows them in the EXACT pose/position from Image 2
+
+IMPORTANT - Be very specific about:
+- Which direction the character is facing (left, right, forward, 3/4 view, etc.)
+- Body pose (standing, sitting, leaning, arms position, etc.)
+- Head angle and eye direction
+- Camera angle (close-up, medium shot, full body, etc.)
+- Expression/emotion on face
+- Background and setting details
 
 Focus on:
 - Cartoon/illustrated art style
 - Specific colors and visual design elements
-- The pose, action, and scene composition
+- EXACT pose, body position, and facing direction from Image 2
 - Keep it family-friendly and artistic
 
 ${customPrompt ? `Additional details: ${customPrompt}` : ''}
 
-Write the prompt as: "A cartoon illustration of [character description] [doing action/pose] in [setting]. Art style: [style details]."
+Write the prompt as: "A cartoon illustration of [detailed character description] [exact pose and facing direction] in [setting]. [Camera angle]. Art style: [style details]."
 
 Respond with ONLY the art prompt, nothing else.`,
             },
