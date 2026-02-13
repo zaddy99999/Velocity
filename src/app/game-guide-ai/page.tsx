@@ -72,16 +72,18 @@ const GAME_FAQS: Record<string, FAQ[]> = {
     { question: 'How does the leaderboard work?', category: 'gameplay' },
   ],
   'hamieverse': [
-    { question: 'What is Hamieverse?', category: 'basics' },
-    { question: 'How do I start in Hamieverse?', category: 'basics' },
-    { question: 'What are Hamies?', category: 'nfts' },
-    { question: 'What is Hamie Genesis?', category: 'nfts' },
-    { question: 'How does the game work?', category: 'gameplay' },
-    { question: 'Is there a Hamie token?', category: 'tokens' },
-    { question: 'How do I earn in Hamieverse?', category: 'earning' },
-    { question: 'What are the NFT rarities?', category: 'nfts' },
-    { question: 'Is there staking?', category: 'earning' },
-    { question: 'What is the Hamieverse roadmap?', category: 'basics' },
+    { question: 'What is Hamieverse Riven?', category: 'basics' },
+    { question: 'What are the card types?', category: 'gameplay' },
+    { question: 'What are the card ranks?', category: 'nfts' },
+    { question: 'How does the fusion system work?', category: 'gameplay' },
+    { question: 'What are Living NFTs?', category: 'nfts' },
+    { question: 'How do I create my own Legend?', category: 'nfts' },
+    { question: 'What currencies are in the game?', category: 'tokens' },
+    { question: 'How does battle combat work?', category: 'gameplay' },
+    { question: 'What is the ingredient system?', category: 'earning' },
+    { question: 'How do guilds work?', category: 'basics' },
+    { question: 'What is the Battle Pass?', category: 'earning' },
+    { question: 'How does the market and trading work?', category: 'earning' },
   ],
   'ruyui': [
     { question: 'What is Ruyui?', category: 'basics' },
@@ -310,16 +312,9 @@ export default function GameGuideAI() {
       </div>
 
       {/* Main Content */}
-      <div style={{ display: 'flex', gap: '1rem', height: 'calc(100vh - 140px)' }}>
+      <div className="game-guide-layout">
         {/* Left Sidebar - Game Tabs */}
-        <div className="card" style={{
-          width: '220px',
-          flexShrink: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          padding: 0,
-          overflow: 'hidden',
-        }}>
+        <div className="card game-guide-sidebar">
           {/* Sidebar Header */}
           <div style={{
             padding: '1rem',
@@ -336,7 +331,7 @@ export default function GameGuideAI() {
           </div>
 
           {/* Game List */}
-          <div style={{
+          <div className="game-list" style={{
             flex: 1,
             overflowY: 'auto',
             padding: '0.5rem',
@@ -344,6 +339,7 @@ export default function GameGuideAI() {
             {games.map((game) => (
               <button
                 key={game.id}
+                className="game-btn"
                 onClick={() => handleGameSelect(game)}
                 style={{
                   width: '100%',
@@ -381,13 +377,7 @@ export default function GameGuideAI() {
         </div>
 
         {/* Main Chat Area */}
-        <div className="card" style={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          padding: 0,
-          overflow: 'hidden',
-        }}>
+        <div className="card game-guide-main">
           {/* Chat Header */}
           <div style={{
             padding: '1rem 1.25rem',
@@ -438,7 +428,7 @@ export default function GameGuideAI() {
             }}>
               Quick Questions
             </div>
-            <div style={{
+            <div className="game-guide-faq-grid" style={{
               display: 'flex',
               flexWrap: 'wrap',
               gap: '0.3rem',
