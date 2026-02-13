@@ -27,29 +27,31 @@ export async function POST(request: NextRequest) {
           content: [
             {
               type: 'text',
-              text: `I have two images:
-1. A meme template that I want to recreate
-2. A character that should replace the main subject in the meme
+              text: `You are a meme recreation expert. I'm giving you two images:
 
-Please analyze both images and write a detailed DALL-E prompt that will recreate the meme scene exactly, but with the character from the second image as the main subject.
+IMAGE 1 (Character): This is the character/person I want to INSERT into the meme.
+IMAGE 2 (Meme Template): This is the popular meme format I want to recreate.
 
-Describe:
-- The exact composition, pose, and framing of the meme
-- The background, lighting, and style
-- How the new character should be positioned/posed to match the original
-- Any text or visual elements that should be preserved
+Your task: Write a DALL-E prompt that recreates the meme template EXACTLY - same composition, pose, background, lighting, style, and visual elements - but with the character from Image 1 swapped in as the main subject.
+
+Key requirements:
+- Preserve the EXACT pose, angle, and body position from the meme template
+- Keep the background, setting, and all environmental details identical
+- Maintain the same art style, lighting, and mood
+- The character from Image 1 should be recognizable but posed exactly like the original meme subject
+- Include any iconic visual elements that make this meme recognizable
 
 ${customPrompt ? `Additional instructions: ${customPrompt}` : ''}
 
-Return ONLY the DALL-E prompt, nothing else.`,
-            },
-            {
-              type: 'image_url',
-              image_url: { url: templateUrl },
+Return ONLY the DALL-E prompt, nothing else. Be specific and detailed.`,
             },
             {
               type: 'image_url',
               image_url: { url: characterUrl },
+            },
+            {
+              type: 'image_url',
+              image_url: { url: templateUrl },
             },
           ],
         },
