@@ -24,14 +24,13 @@ export async function POST(request: NextRequest) {
 
     const replicate = getReplicate();
 
-    // Use advanced face-swap model: full body swap into the meme template
+    // Use face-swap model: swap character into the meme template
     const output = await replicate.run(
-      "easel/advanced-face-swap:602d8c526aca9e5081f0515649ff8998e058cf7e6b9ff32717d25327f18c5145",
+      "codeplugtech/face-swap:278a81e7ebb22db98bcba54de985d22cc1abeead2754eb1f2af717247be69b34",
       {
         input: {
+          input_image: templateUrl,    // The meme template (target scene)
           swap_image: characterUrl,    // The character/PFP to insert
-          target_image: templateUrl,   // The meme template (target scene)
-          hair_source: "user",         // Keep hair from the character
         }
       }
     );
@@ -52,6 +51,21 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('Meme generation error:', error);
     const errorMessage = error?.message || 'Generation failed';
+
+    // Handle rate limiting
+    if (errorMessage.includes('429') || errorMessage.includes('throttled')) {
+      return NextResponse.json({
+        error: 'Rate limited - please wait a few seconds and try again. Add $5+ to Replicate for faster limits.',
+      }, { status: 429 });
+    }
+
+    // Handle payment issues
+    if (errorMessage.includes('402') || errorMessage.includes('credit')) {
+      return NextResponse.json({
+        error: 'Replicate credits needed. Add funds at replicate.com/account/billing',
+      }, { status: 402 });
+    }
+
     return NextResponse.json({
       error: errorMessage,
     }, { status: 500 });
