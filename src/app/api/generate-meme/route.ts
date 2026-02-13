@@ -62,25 +62,50 @@ export async function POST(request: NextRequest) {
 
     const replicate = getReplicate();
 
-    // Use face-swap model: swap character into the meme template
-    const output = await replicate.run(
-      "codeplugtech/face-swap:278a81e7ebb22db98bcba54de985d22cc1abeead2754eb1f2af717247be69b34",
-      {
-        input: {
-          input_image: templateDataUrl,    // The meme template (target scene)
-          swap_image: characterDataUrl,    // The character/PFP to insert
-        }
+    // Create prediction
+    const prediction = await replicate.predictions.create({
+      version: "278a81e7ebb22db98bcba54de985d22cc1abeead2754eb1f2af717247be69b34",
+      input: {
+        input_image: templateDataUrl,
+        swap_image: characterDataUrl,
       }
-    );
+    });
 
-    console.log('Replicate output:', output);
+    console.log('Prediction created:', prediction.id);
 
-    if (!output) {
-      return NextResponse.json({ error: 'Failed to generate image' }, { status: 500 });
+    // Poll for completion (up to 60 seconds)
+    let result = prediction;
+    const maxAttempts = 30;
+    for (let i = 0; i < maxAttempts; i++) {
+      if (result.status === 'succeeded' || result.status === 'failed') {
+        break;
+      }
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      result = await replicate.predictions.get(prediction.id);
+      console.log(`Poll ${i + 1}: status=${result.status}`);
     }
 
-    // Output is the URL of the generated image
-    const generatedUrl = typeof output === 'string' ? output : (output as any)[0];
+    console.log('Final result:', JSON.stringify(result));
+
+    if (result.status === 'failed') {
+      throw new Error(result.error || 'Prediction failed');
+    }
+
+    const generatedUrl = result.output;
+    console.log('Output URL:', generatedUrl);
+
+    if (!generatedUrl) {
+      // Check logs for face detection issue
+      const logs = (result as any).logs || '';
+      if (logs.includes('No face') || logs.includes('None None')) {
+        return NextResponse.json({
+          error: 'No face detected in one of the images. Try images with clearer, front-facing faces.'
+        }, { status: 400 });
+      }
+      return NextResponse.json({
+        error: 'Generation failed - no output received'
+      }, { status: 500 });
+    }
 
     return NextResponse.json({
       imageUrl: generatedUrl,
