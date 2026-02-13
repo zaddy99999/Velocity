@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Groq from 'groq-sdk';
 import { getGameGuideDocs, getGameGuideDocsWithContent, ensureGameGuideDocsTab, populateGameGuideGames, findFAQAnswer, ensureGameGuideFAQTab } from '@/lib/sheets';
 
 interface ChatMessage {
@@ -71,20 +70,32 @@ Important: Never say things like "there is no information" or "documentation doe
       });
     }
 
-    // Use Groq API for AI responses
-    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-
-    const completion = await groq.chat.completions.create({
-      messages: [
-        { role: 'system', content: systemPrompt },
-        ...messages.map((m: ChatMessage) => ({ role: m.role as 'user' | 'assistant', content: m.content })),
-      ],
-      model: 'llama-3.3-70b-versatile',
-      temperature: 0.7,
-      max_tokens: 1500,
+    // Use Groq API for AI responses (fetch for Vercel compatibility)
+    const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        messages: [
+          { role: 'system', content: systemPrompt },
+          ...messages.map((m: ChatMessage) => ({ role: m.role as 'user' | 'assistant', content: m.content })),
+        ],
+        model: 'llama-3.3-70b-versatile',
+        temperature: 0.7,
+        max_tokens: 1500,
+      }),
     });
 
-    const aiResponse = completion.choices[0]?.message?.content || 'Sorry, I could not generate a response.';
+    if (!groqResponse.ok) {
+      const errorText = await groqResponse.text();
+      console.error('Groq API error:', groqResponse.status, errorText);
+      throw new Error(`Groq API error: ${groqResponse.status}`);
+    }
+
+    const completion = await groqResponse.json();
+    const aiResponse = completion.choices?.[0]?.message?.content || 'Sorry, I could not generate a response.';
 
     return NextResponse.json({
       role: 'assistant',
