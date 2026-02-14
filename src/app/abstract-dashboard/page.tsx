@@ -1192,7 +1192,7 @@ export default function AbstractDashboardPage() {
                             target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(nft.name)}&background=1a1a1a&color=2edb84&size=44`;
                           }}
                         />
-                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '120px' }}>{nft.name}</span>
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '80px' }}>{nft.name}</span>
                       </div>
                     </td>
                     <td style={{ padding: '0.5rem 0.25rem', fontSize: '0.75rem', textAlign: 'right' }}>
@@ -1259,7 +1259,7 @@ export default function AbstractDashboardPage() {
                             target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(token.symbol)}&background=1a1a1a&color=2edb84&size=44`;
                           }}
                         />
-                        <span>{token.symbol}</span>
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '60px' }}>{token.symbol}</span>
                       </div>
                     </td>
                     <td style={{ padding: '0.5rem 0.25rem', fontSize: '0.75rem', textAlign: 'right' }}>
