@@ -802,13 +802,9 @@ export default function AbstractDashboardPage() {
   useEffect(() => {
     const fetchEliteWallets = async () => {
       try {
-        const [obsidianRes, diamondRes] = await Promise.all([
-          fetch('/data/wallets-obsidian.json'),
-          fetch('/data/wallets-diamond.json'),
-        ]);
-        const obsidian = await obsidianRes.json();
-        const diamond = await diamondRes.json();
-        setEliteWallets({ obsidian, diamond });
+        const res = await fetch('/api/elite-wallets');
+        const data = await res.json();
+        setEliteWallets({ obsidian: data.obsidian || [], diamond: data.diamond || [] });
       } catch (err) {
         console.error('Error fetching elite wallets:', err);
       }
