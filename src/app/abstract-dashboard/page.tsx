@@ -1227,10 +1227,10 @@ export default function AbstractDashboardPage() {
               <thead>
                 <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
                   <th style={{ textAlign: 'left', padding: '0.5rem 0.25rem', fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>#</th>
-                  <th style={{ textAlign: 'left', padding: '0.5rem 0.25rem', fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>Token</th>
-                  <th style={{ textAlign: 'right', padding: '0.5rem 0.25rem', paddingLeft: '100px', fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>Price</th>
-                  <th style={{ textAlign: 'right', padding: '0.5rem 0.25rem', paddingLeft: '100px', fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>24h</th>
-                  <th style={{ textAlign: 'right', padding: '0.5rem 0.25rem', paddingLeft: '100px', fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>MCap</th>
+                  <th style={{ textAlign: 'left', padding: '0.5rem 0.25rem', fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)', fontWeight: 600, transform: 'translateX(-50px)' }}>Token</th>
+                  <th style={{ textAlign: 'right', padding: '0.5rem 0.25rem', fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)', fontWeight: 600, transform: 'translateX(-100px)' }}>Price</th>
+                  <th style={{ textAlign: 'right', padding: '0.5rem 0.25rem', fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)', fontWeight: 600, transform: 'translateX(-100px)' }}>24h</th>
+                  <th style={{ textAlign: 'right', padding: '0.5rem 0.25rem', fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)', fontWeight: 600, transform: 'translateX(-100px)' }}>MCap</th>
                 </tr>
               </thead>
               <tbody>
@@ -1246,7 +1246,7 @@ export default function AbstractDashboardPage() {
                     onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                   >
                     <td style={{ padding: '0.5rem 0.25rem', fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)' }}>{index + 1}</td>
-                    <td style={{ padding: '0.5rem 0.25rem', fontSize: '0.75rem', fontWeight: 600 }}>
+                    <td style={{ padding: '0.5rem 0.25rem', fontSize: '0.75rem', fontWeight: 600, transform: 'translateX(-50px)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                         <img
                           src={token.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(token.symbol)}&background=1a1a1a&color=2edb84&size=44`}
@@ -1261,19 +1261,19 @@ export default function AbstractDashboardPage() {
                         <span>{token.symbol}</span>
                       </div>
                     </td>
-                    <td style={{ padding: '0.5rem 0.25rem', paddingRight: '50px', fontSize: '0.75rem', textAlign: 'right' }}>
+                    <td style={{ padding: '0.5rem 0.25rem', fontSize: '0.75rem', textAlign: 'right', transform: 'translateX(-100px)' }}>
                       {(token.price ?? 0) < 0.01 ? `$${(token.price ?? 0).toFixed(5)}` : `$${(token.price ?? 0).toFixed(3)}`}
                     </td>
                     <td style={{
                       padding: '0.5rem 0.25rem',
-                      paddingRight: '50px',
                       fontSize: '0.75rem',
                       textAlign: 'right',
                       color: (token.priceChange24h ?? 0) >= 0 ? '#2edb84' : '#ff6b6b',
+                      transform: 'translateX(-100px)',
                     }}>
                       {(token.priceChange24h ?? 0) >= 0 ? '+' : ''}{(token.priceChange24h ?? 0).toFixed(1)}%
                     </td>
-                    <td style={{ padding: '0.5rem 0.25rem', paddingRight: '50px', fontSize: '0.75rem', textAlign: 'right' }}>
+                    <td style={{ padding: '0.5rem 0.25rem', fontSize: '0.75rem', textAlign: 'right', transform: 'translateX(-100px)' }}>
                       {(token.marketCap ?? 0) >= 1000000 ? `$${((token.marketCap ?? 0) / 1000000).toFixed(1)}M` : (token.marketCap ?? 0) >= 1000 ? `$${((token.marketCap ?? 0) / 1000).toFixed(0)}K` : '-'}
                     </td>
                   </tr>
