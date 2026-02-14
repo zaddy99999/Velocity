@@ -88,10 +88,11 @@ export default function ChannelTable({ channels, compareChannels = [], onToggleC
     const delta = channel.delta1d || 0;
     const avgDelta = channel.avg7dDelta || delta;
 
-    // Generate 7 data points showing the trend
+    // Generate 7 data points showing the trend (deterministic based on base to avoid hydration mismatch)
     const data: number[] = [];
     for (let i = 6; i >= 0; i--) {
-      const variance = (Math.random() - 0.5) * Math.abs(avgDelta) * 0.5;
+      const seed = (base + i * 1000) % 100;
+      const variance = ((seed / 100) - 0.5) * Math.abs(avgDelta) * 0.5;
       const dayValue = base - (i * avgDelta) + variance;
       data.push(Math.max(0, dayValue));
     }
