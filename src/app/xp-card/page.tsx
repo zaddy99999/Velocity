@@ -61,31 +61,52 @@ export default function XPCardPage() {
   const idFileInputRef = useRef<HTMLInputElement>(null);
   const xpFileInputRef = useRef<HTMLInputElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+  const [idDragging, setIdDragging] = useState(false);
+  const [xpDragging, setXpDragging] = useState(false);
 
   const rankTiers: RankTier[] = ['Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond', 'Obsidian'];
   const rankLevels: RankLevel[] = ['1', '2', '3'];
   const roles: Role[] = ['Elite Chad', 'Graduated Elite Chad', 'Gigachad'];
 
-  const handleIdImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
+  const processImageFile = (file: File, setImage: (url: string) => void) => {
+    if (file && file.type.startsWith('image/')) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setIdProfileImage(reader.result as string);
+        setImage(reader.result as string);
       };
       reader.readAsDataURL(file);
     }
   };
 
+  const handleIdImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) processImageFile(file, setIdProfileImage);
+  };
+
   const handleXpImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setXpProfileImage(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
+    if (file) processImageFile(file, setXpProfileImage);
+  };
+
+  const handleIdDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIdDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) processImageFile(file, setIdProfileImage);
+  };
+
+  const handleXpDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setXpDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) processImageFile(file, setXpProfileImage);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
   };
 
   const handleDownload = async () => {
@@ -185,13 +206,23 @@ export default function XPCardPage() {
                 <div
                   className="id-upload-box"
                   onClick={() => idFileInputRef.current?.click()}
+                  onDrop={handleIdDrop}
+                  onDragOver={handleDragOver}
+                  onDragEnter={(e) => { e.preventDefault(); setIdDragging(true); }}
+                  onDragLeave={(e) => { e.preventDefault(); setIdDragging(false); }}
+                  style={{
+                    borderColor: idDragging ? '#2edb84' : undefined,
+                    background: idDragging ? 'rgba(46, 219, 132, 0.1)' : undefined,
+                    transform: idDragging ? 'scale(1.02)' : undefined,
+                    transition: 'all 0.2s ease',
+                  }}
                 >
                   {idProfileImage ? (
                     <img src={idProfileImage} alt="Profile" className="id-upload-preview" />
                   ) : (
                     <div className="id-upload-placeholder">
                       <span className="id-upload-icon">+</span>
-                      <span>Click to upload</span>
+                      <span>{idDragging ? 'Drop image here' : 'Click or drag to upload'}</span>
                     </div>
                   )}
                   <input
@@ -293,13 +324,23 @@ export default function XPCardPage() {
                 <div
                   className="id-upload-box"
                   onClick={() => xpFileInputRef.current?.click()}
+                  onDrop={handleXpDrop}
+                  onDragOver={handleDragOver}
+                  onDragEnter={(e) => { e.preventDefault(); setXpDragging(true); }}
+                  onDragLeave={(e) => { e.preventDefault(); setXpDragging(false); }}
+                  style={{
+                    borderColor: xpDragging ? '#2edb84' : undefined,
+                    background: xpDragging ? 'rgba(46, 219, 132, 0.1)' : undefined,
+                    transform: xpDragging ? 'scale(1.02)' : undefined,
+                    transition: 'all 0.2s ease',
+                  }}
                 >
                   {xpProfileImage ? (
                     <img src={xpProfileImage} alt="Profile" className="id-upload-preview" />
                   ) : (
                     <div className="id-upload-placeholder">
                       <span className="id-upload-icon">+</span>
-                      <span>Click to upload</span>
+                      <span>{xpDragging ? 'Drop image here' : 'Click or drag to upload'}</span>
                     </div>
                   )}
                   <input
