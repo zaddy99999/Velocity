@@ -102,7 +102,7 @@ export default function UIDesignSwitcher() {
         onClick={() => setIsOpen(!isOpen)}
         style={{
           position: 'fixed',
-          bottom: '20px',
+          bottom: '80px',
           left: '20px',
           width: '50px',
           height: '50px',
@@ -130,7 +130,7 @@ export default function UIDesignSwitcher() {
         <div
           style={{
             position: 'fixed',
-            bottom: '80px',
+            bottom: '140px',
             left: '20px',
             width: '320px',
             maxHeight: '70vh',

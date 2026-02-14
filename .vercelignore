@@ -1,0 +1,13 @@
+# Large data files
+data/
+scripts/
+
+# Large images in root (not public/)
+/AbsBanner.png
+/AbstractIDCard.png
+/HammieBannerBigger*
+/Heatmap*.png
+/backgroundzt.png
+/example*.jpeg
+/Screenshot*
+/RunescapeSkillsTab.webp

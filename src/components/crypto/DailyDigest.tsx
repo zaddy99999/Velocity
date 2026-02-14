@@ -82,16 +82,18 @@ export default function DailyDigest() {
     return (
       <div className="digest-card">
         <div className="digest-masthead">
-          <div className="digest-brand">THE BRIEF</div>
-          <div className="digest-tagline">AI-Powered Market Intelligence</div>
-        </div>
-        <div className="digest-mode-toggle">
-          <button className={`digest-mode-btn ${mode === 'daily' ? 'active' : ''}`} disabled>
-            Daily
-          </button>
-          <button className={`digest-mode-btn ${mode === 'weekly' ? 'active' : ''}`} disabled>
-            Weekly
-          </button>
+          <div className="digest-masthead-left">
+            <div className="digest-brand">THE BRIEF</div>
+            <div className="digest-tagline">AI-Powered Market Intelligence • Last 24 Hours</div>
+          </div>
+          <div className="digest-mode-toggle">
+            <button className={`digest-mode-btn ${mode === 'daily' ? 'active' : ''}`} disabled>
+              Daily
+            </button>
+            <button className={`digest-mode-btn ${mode === 'weekly' ? 'active' : ''}`} disabled>
+              Weekly
+            </button>
+          </div>
         </div>
         <div className="digest-loading">
           <div className="digest-spinner" />
@@ -117,26 +119,28 @@ export default function DailyDigest() {
 
   return (
     <div className="digest-card">
-      {/* Masthead */}
+      {/* Masthead with toggle */}
       <div className="digest-masthead">
-        <div className="digest-brand">THE BRIEF</div>
-        <div className="digest-tagline">AI-Powered Market Intelligence</div>
-      </div>
-
-      {/* Mode Toggle */}
-      <div className="digest-mode-toggle">
-        <button
-          className={`digest-mode-btn ${mode === 'daily' ? 'active' : ''}`}
-          onClick={() => handleModeChange('daily')}
-        >
-          Daily
-        </button>
-        <button
-          className={`digest-mode-btn ${mode === 'weekly' ? 'active' : ''}`}
-          onClick={() => handleModeChange('weekly')}
-        >
-          Weekly
-        </button>
+        <div className="digest-masthead-left">
+          <div className="digest-brand">THE BRIEF</div>
+          <div className="digest-tagline">
+            AI-Powered Market Intelligence • Last 24 Hours
+          </div>
+        </div>
+        <div className="digest-mode-toggle">
+          <button
+            className={`digest-mode-btn ${mode === 'daily' ? 'active' : ''}`}
+            onClick={() => handleModeChange('daily')}
+          >
+            Daily
+          </button>
+          <button
+            className={`digest-mode-btn ${mode === 'weekly' ? 'active' : ''}`}
+            onClick={() => handleModeChange('weekly')}
+          >
+            Weekly
+          </button>
+        </div>
       </div>
 
       {/* Date Nav - only show for daily mode with multiple days */}
@@ -158,11 +162,6 @@ export default function DailyDigest() {
             Newer &rarr;
           </button>
         </div>
-      )}
-
-      {/* Single date label for weekly or single day */}
-      {(mode === 'weekly' || !digests || digests.length <= 1) && (
-        <div className="digest-date-single">{currentDigest.dateLabel}</div>
       )}
 
       {/* Section Bullets - grouped by category */}
