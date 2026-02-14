@@ -40,7 +40,7 @@ function ChartSkeleton() {
             <SkeletonPulse
               className="chart-skeleton-bar"
               style={{
-                height: `${Math.random() * 60 + 40}%`,
+                height: `${40 + (i * 7) % 60}%`,
                 animationDelay: `${i * 0.1}s`
               }}
             />
@@ -57,7 +57,7 @@ function TableSkeleton() {
     <div className="table-skeleton">
       <div className="table-skeleton-header">
         {Array.from({ length: 6 }).map((_, i) => (
-          <SkeletonPulse key={i} style={{ width: `${60 + Math.random() * 40}px`, height: '14px' }} />
+          <SkeletonPulse key={i} style={{ width: `${60 + (i * 8) % 40}px`, height: '14px' }} />
         ))}
       </div>
       {Array.from({ length: 10 }).map((_, i) => (
@@ -65,7 +65,7 @@ function TableSkeleton() {
           <SkeletonPulse style={{ width: '30px', height: '16px' }} />
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <SkeletonPulse style={{ width: '28px', height: '28px', borderRadius: '50%' }} />
-            <SkeletonPulse style={{ width: `${80 + Math.random() * 60}px`, height: '16px' }} />
+            <SkeletonPulse style={{ width: `${80 + (i * 6) % 60}px`, height: '16px' }} />
           </div>
           <SkeletonPulse style={{ width: '50px', height: '20px', borderRadius: '4px' }} />
           <SkeletonPulse style={{ width: '70px', height: '16px' }} />
