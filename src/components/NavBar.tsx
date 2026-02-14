@@ -4,20 +4,74 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 
+// SVG Icon components for cleaner menu look
+const ChartIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
+  </svg>
+);
+
+const TrendingIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" />
+  </svg>
+);
+
+const NewsIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2" />
+    <path d="M18 14h-8" /><path d="M15 18h-5" /><path d="M10 6h8v4h-8V6Z" />
+  </svg>
+);
+
+const CardIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect width="20" height="14" x="2" y="5" rx="2" /><line x1="2" x2="22" y1="10" y2="10" />
+  </svg>
+);
+
+const TargetIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" />
+  </svg>
+);
+
+const TrophyIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" /><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+    <path d="M4 22h16" /><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
+    <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
+    <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+  </svg>
+);
+
+const WalletIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1" />
+    <path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4" />
+  </svg>
+);
+
+const GameIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="6" x2="10" y1="12" y2="12" /><line x1="8" x2="8" y1="10" y2="14" />
+    <line x1="15" x2="15.01" y1="13" y2="13" /><line x1="18" x2="18.01" y1="11" y2="11" />
+    <rect width="20" height="12" x="2" y="6" rx="2" />
+  </svg>
+);
+
 const mainNavItems = [
-  { href: '/', label: 'Social Analytics', icon: '📊' },
-  { href: '/market-analysis', label: 'Market Analysis', icon: '📈' },
-  { href: '/news', label: 'News Feed', icon: '📰' },
-  { href: '/xp-card', label: 'ID Card / XP Card', icon: '🪪' },
-  { href: '/meme-generator', label: 'Meme Generator', icon: '🎨' },
-  { href: '/api-docs', label: 'API Docs', icon: '📖' },
+  { href: '/', label: 'Social Analytics', icon: <ChartIcon /> },
+  { href: '/market-analysis', label: 'Market Analysis', icon: <TrendingIcon /> },
+  { href: '/news', label: 'News Feed', icon: <NewsIcon /> },
+  { href: '/xp-card', label: 'ID Card / XP Card', icon: <CardIcon /> },
 ];
 
 const abstractNavItems = [
-  { href: '/abstract-dashboard', label: 'Abstract Dashboard', icon: '🎯' },
-  { href: '/tier-maker', label: 'Tier List', icon: '🏆' },
-  { href: '/wallet-analytics', label: 'Wallet Analysis', icon: '💰' },
-  { href: '/game-guide-ai', label: 'GameGuideAI', icon: '🎮' },
+  { href: '/abstract-dashboard', label: 'Abstract Dashboard', icon: <TargetIcon /> },
+  { href: '/tier-maker', label: 'Tier List', icon: <TrophyIcon /> },
+  { href: '/wallet-analytics', label: 'Wallet Analysis', icon: <WalletIcon /> },
+  { href: '/game-guide-ai', label: 'GameGuideAI', icon: <GameIcon /> },
 ];
 
 export default function NavBar() {

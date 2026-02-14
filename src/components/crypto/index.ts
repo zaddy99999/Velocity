@@ -18,3 +18,4 @@ export { default as WhaleAlerts } from './WhaleAlerts';
 export { default as FundingRates } from './FundingRates';
 export { default as UpcomingEvents } from './UpcomingEvents';
 export { default as PriceChart } from './PriceChart';
+export { default as LiquidationTracker } from './LiquidationTracker';

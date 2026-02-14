@@ -1,7 +1,7 @@
 'use client';
 
 import NavBar from '@/components/NavBar';
-import { DailyDigest, PodcastList, NewsletterList } from '@/components/crypto';
+import { DailyDigest, PodcastList, NewsletterList, UpcomingEvents } from '@/components/crypto';
 
 export default function NewsPage() {
   return (
@@ -33,6 +33,16 @@ export default function NewsPage() {
         </div>
         <div className="podcast-newsletter-half">
           <NewsletterList />
+        </div>
+      </div>
+
+      {/* Events Row */}
+      <div className="podcast-newsletter-row" style={{ marginTop: '1.5rem' }}>
+        <div className="podcast-newsletter-half">
+          <UpcomingEvents />
+        </div>
+        <div className="podcast-newsletter-half">
+          {/* Placeholder for future content */}
         </div>
       </div>
     </main>

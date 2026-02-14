@@ -636,53 +636,51 @@ export async function GET(request: NextRequest) {
       // Will use current price as fallback
     }
 
-    // Get transaction history from both directions for better coverage
+    // Get transaction history using block ranges to bypass API pagination limits
+    // API limit: page * offset <= 1000, so we use block ranges instead
     const allTxs: any[] = [];
     const seenHashes = new Set<string>();
-    const pageSize = 1000;
 
-    // Fetch transactions - up to 10k from oldest
-    for (let page = 1; page <= 10; page++) {
-      const txListData = await getExplorerData('account', 'txlist', address, {
-        startblock: '0',
-        endblock: '99999999',
-        page: String(page),
-        offset: String(pageSize),
-        sort: 'asc',
-      });
-
-      if (txListData?.status !== '1' || !txListData?.result?.length) break;
-
-      for (const tx of txListData.result) {
-        if (!seenHashes.has(tx.hash)) {
-          seenHashes.add(tx.hash);
-          allTxs.push(tx);
-        }
-      }
-
-      if (txListData.result.length < pageSize) break;
+    // Get current block number for range calculation
+    let currentBlock = 50000000; // Default high value
+    try {
+      const blockHex = await rpcCall('eth_blockNumber', []);
+      currentBlock = parseInt(blockHex, 16);
+    } catch {
+      // Use default
     }
 
-    // Fetch newest transactions (desc) to get recent activity
-    for (let page = 1; page <= 10; page++) {
-      const txListData = await getExplorerData('account', 'txlist', address, {
-        startblock: '0',
-        endblock: '99999999',
-        page: String(page),
-        offset: String(pageSize),
-        sort: 'desc',
-      });
+    // Fetch transactions in block ranges with pagination within each range
+    const blockStep = 2000000; // ~2M blocks per range
+    for (let startBlock = 0; startBlock <= currentBlock; startBlock += blockStep) {
+      const endBlock = Math.min(startBlock + blockStep - 1, currentBlock);
 
-      if (txListData?.status !== '1' || !txListData?.result?.length) break;
+      // Paginate within each block range
+      for (let page = 1; page <= 20; page++) {
+        const txListData = await getExplorerData('account', 'txlist', address, {
+          startblock: String(startBlock),
+          endblock: String(endBlock),
+          page: String(page),
+          offset: '1000',
+          sort: 'asc',
+        });
 
-      for (const tx of txListData.result) {
-        if (!seenHashes.has(tx.hash)) {
-          seenHashes.add(tx.hash);
-          allTxs.push(tx);
+        if (txListData?.status !== '1' || !Array.isArray(txListData.result) || txListData.result.length === 0) {
+          break; // No more transactions in this block range
+        }
+
+        for (const tx of txListData.result) {
+          if (!seenHashes.has(tx.hash)) {
+            seenHashes.add(tx.hash);
+            allTxs.push(tx);
+          }
+        }
+
+        // If we got less than 1000, no more pages in this range
+        if (txListData.result.length < 1000) {
+          break;
         }
       }
-
-      if (txListData.result.length < pageSize) break;
     }
 
     // Sort all transactions by timestamp
@@ -932,8 +930,39 @@ export async function GET(request: NextRequest) {
 
     // NFT count and holdings - try multiple approaches
     let nftCount = 0;
+    let openSeaNftCount = 0; // More accurate count from OpenSea (includes ERC1155)
     const nftHoldings: NftHolding[] = [];
     const nftBalanceMap = new Map<string, { balance: number; contractAddress: string; tokenId: string; tokenName?: string; collectionName?: string }>();
+
+    // Try OpenSea API for accurate NFT count (includes ERC1155)
+    if (process.env.OPENSEA_API_KEY) {
+      try {
+        let nextCursor: string | null = '';
+        let pageCount = 0;
+        const maxPages = 10; // Safety limit
+
+        while (nextCursor !== null && pageCount < maxPages) {
+          const nftUrl: string = `https://api.opensea.io/api/v2/chain/abstract/account/${address}/nfts?limit=200${nextCursor ? `&next=${nextCursor}` : ''}`;
+          const osResponse = await fetch(nftUrl, {
+            headers: {
+              'Accept': 'application/json',
+              'X-API-KEY': process.env.OPENSEA_API_KEY,
+            },
+          });
+
+          if (osResponse.ok) {
+            const osData = await osResponse.json();
+            openSeaNftCount += (osData.nfts || []).length;
+            nextCursor = osData.next || null;
+            pageCount++;
+          } else {
+            break;
+          }
+        }
+      } catch {
+        // OpenSea failed, will use transfer-based counting
+      }
+    }
 
     // Try ERC721 transfers - paginate to get all
     for (let page = 1; page <= 10; page++) {
@@ -968,39 +997,9 @@ export async function GET(request: NextRequest) {
       if (nftData.result.length < 1000) break;
     }
 
-    // Also try ERC1155 transfers - paginate to get all
-    for (let page = 1; page <= 10; page++) {
-      const nft1155Data = await getExplorerData('account', 'token1155tx', address, {
-        startblock: '0',
-        endblock: '99999999',
-        page: String(page),
-        offset: '1000',
-        sort: 'asc',
-      });
-
-      if (nft1155Data?.status !== '1' || !nft1155Data?.result?.length) break;
-
-      for (const tx of nft1155Data.result) {
-        const key = `${tx.contractAddress.toLowerCase()}-${tx.tokenID}`;
-        const existing = nftBalanceMap.get(key) || {
-          balance: 0,
-          contractAddress: tx.contractAddress,
-          tokenId: tx.tokenID,
-          tokenName: tx.tokenName,
-          collectionName: tx.tokenSymbol || tx.tokenName
-        };
-
-        const value = parseInt(tx.tokenValue || '1');
-        if (tx.to.toLowerCase() === address.toLowerCase()) {
-          existing.balance += value;
-        } else if (tx.from.toLowerCase() === address.toLowerCase()) {
-          existing.balance -= value;
-        }
-        nftBalanceMap.set(key, existing);
-      }
-
-      if (nft1155Data.result.length < 1000) break;
-    }
+    // Note: Abscan API doesn't support token1155tx endpoint
+    // ERC1155 NFTs (like Abstract Badges) are fetched separately via direct RPC calls
+    // The badge count will be added to the NFT count below
 
     // Count owned NFTs and build holdings list
     // Sum total NFT balance (not just unique token IDs)
@@ -1104,7 +1103,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Use actual fetched transaction count (more accurate than nonce which is just outgoing)
-    const transactionCount = allTxs.length > 0 ? allTxs.length : nonceCount;
+    // Note: Explorer API has limits - if we hit exactly 2000, 5000, or 10000, we likely hit a cap
+    let transactionCount = allTxs.length > 0 ? allTxs.length : nonceCount;
+
+    // Use the actual fetched transaction count - no guessing
 
     // Estimate data if API wasn't available (no API key or API failed)
     const hasApiData = activeDays > 0 || contractsInteracted > 0;
@@ -1134,7 +1136,16 @@ export async function GET(request: NextRequest) {
       fetchXeetCards(address),
     ]);
     const abstractBadgeCount = badges.length;
-    const xeetCardCount = xeetCards.length;
+    const xeetCardCount = xeetCards.reduce((sum, card) => sum + card.balance, 0);
+
+    // Add ERC1155 NFTs (badges and xeet cards) to total NFT count
+    // These are fetched via direct RPC since Abscan doesn't support token1155tx
+    nftCount += abstractBadgeCount + xeetCardCount;
+
+    // Use OpenSea count if higher (more accurate as it includes all ERC1155)
+    if (openSeaNftCount > nftCount) {
+      nftCount = openSeaNftCount;
+    }
 
     // Calculate score and personality
     const scoreData = {

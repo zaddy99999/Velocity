@@ -1778,10 +1778,18 @@ th.sortable:hover {
   margin: 0;
 }
 
+.heatmap-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 .heatmap-toggles {
   display: flex;
   gap: 0.25rem;
-  margin-top: 0.5rem;
 }
 
 .heatmap-toggle {
@@ -2864,6 +2872,7 @@ th.sortable:hover {
 .podcast-info {
   flex: 1;
   min-width: 0;
+  overflow: hidden;
 }
 
 .podcast-name {
@@ -2874,6 +2883,8 @@ th.sortable:hover {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 100%;
+  padding-right: 0.5rem;
 }
 
 .podcast-author {
@@ -3138,7 +3149,7 @@ a.ranking-row:hover .coin-name {
   background: rgba(10, 10, 15, 0.92);
   border: 1px solid rgba(46, 219, 132, 0.2);
   border-radius: 12px;
-  padding: 0.75rem 1rem;
+  padding: 0.4rem 0.6rem;
   transition: all 0.2s ease;
   display: flex;
   flex-direction: column;
@@ -3159,13 +3170,13 @@ a.ranking-row:hover .coin-name {
 .global-metrics-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 0.75rem;
+  gap: 0.2rem 0.4rem;
 }
 
 .global-metric {
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 0.1rem;
 }
 
 .global-metric-label {
@@ -3197,10 +3208,13 @@ a.ranking-row:hover .coin-name {
 }
 
 .global-metrics-footer {
-  margin-top: 0.5rem;
-  padding-top: 0.4rem;
+  margin-top: 0.35rem;
+  padding-top: 0.3rem;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   text-align: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 /* Fear & Greed Index */
@@ -3208,7 +3222,7 @@ a.ranking-row:hover .coin-name {
   background: rgba(10, 10, 15, 0.92);
   border: 1px solid rgba(46, 219, 132, 0.2);
   border-radius: 12px;
-  padding: 0.75rem 1rem;
+  padding: 0.4rem 0.6rem;
   transition: all 0.2s ease;
   overflow: hidden;
   display: flex;
@@ -3229,8 +3243,8 @@ a.ranking-row:hover .coin-name {
 
 .gauge-container {
   position: relative;
-  width: 50px;
-  height: 50px;
+  width: 42px;
+  height: 42px;
   flex-shrink: 0;
 }
 
@@ -3327,16 +3341,16 @@ a.ranking-row:hover .coin-name {
 .sentiment-stats {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.4rem;
-  margin-top: 0.5rem;
+  gap: 0.15rem;
+  margin-top: 0.2rem;
 }
 
 .sentiment-stat {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.65rem;
-  padding: 0.2rem 0;
+  font-size: 0.6rem;
+  padding: 0.1rem 0;
 }
 
 .sentiment-label {
@@ -3934,10 +3948,16 @@ a.ranking-row:hover .coin-name {
 }
 
 .digest-masthead {
-  text-align: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   padding-bottom: 0.75rem;
   margin-bottom: 0.75rem;
   border-bottom: 2px solid #2edb84;
+}
+
+.digest-masthead-left {
+  text-align: left;
 }
 
 .digest-brand {
@@ -3993,14 +4013,12 @@ a.ranking-row:hover .coin-name {
 
 .digest-mode-toggle {
   display: flex;
-  justify-content: center;
   gap: 0.5rem;
-  margin-bottom: 1rem;
 }
 
 .digest-mode-btn {
-  padding: 0.4rem 1rem;
-  font-size: 0.75rem;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.7rem;
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -9309,6 +9327,9 @@ h1 {
   );
   background-size: 200% auto;
   animation: textGradient 5s ease infinite;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 @keyframes textGradient {
@@ -9812,6 +9833,10 @@ h1 {
   line-height: 1.2;
   font-weight: 800;
   letter-spacing: -0.04em;
+  background: linear-gradient(135deg, #2edb84 0%, #3b82f6 50%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 h2 {
@@ -12874,4 +12899,328 @@ html {
 .api-error-codes td code {
   font-family: 'JetBrains Mono', monospace;
   color: #2edb84;
+}
+
+/* -----------------------------------------------------------------------
+   COOL GLOWING BORDER EFFECTS FOR DASHBOARD MODULES
+   ----------------------------------------------------------------------- */
+
+/* Animated gradient border keyframes */
+@keyframes borderGlow {
+  0%, 100% {
+    border-color: rgba(46, 219, 132, 0.3);
+    box-shadow: 0 0 15px -5px rgba(46, 219, 132, 0.2),
+                inset 0 0 20px -10px rgba(46, 219, 132, 0.05);
+  }
+  50% {
+    border-color: rgba(46, 219, 132, 0.5);
+    box-shadow: 0 0 25px -5px rgba(46, 219, 132, 0.35),
+                inset 0 0 30px -10px rgba(46, 219, 132, 0.1);
+  }
+}
+
+/* Apply cool borders to all dashboard module cards */
+.price-chart-card,
+.global-metrics-card,
+.fear-greed-card,
+.top-movers-card,
+.coin-rankings-card,
+.sector-performance-card,
+.nft-leaderboard-card,
+.chain-flows-card,
+.vc-funding-card,
+.net-flows-card,
+.whale-alerts-card,
+.upcoming-events-card,
+.mindshare-card,
+.liquidation-tracker-card,
+.funding-rates-card {
+  position: relative;
+  border: 1px solid rgba(46, 219, 132, 0.25);
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(10, 12, 16, 0.95) 0%, rgba(8, 10, 14, 0.98) 100%);
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.4),
+    0 0 20px -8px rgba(46, 219, 132, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  transition: all 0.3s ease;
+}
+
+/* Hover state - enhanced glow */
+.price-chart-card:hover,
+.global-metrics-card:hover,
+.fear-greed-card:hover,
+.top-movers-card:hover,
+.coin-rankings-card:hover,
+.sector-performance-card:hover,
+.nft-leaderboard-card:hover,
+.chain-flows-card:hover,
+.vc-funding-card:hover,
+.net-flows-card:hover,
+.whale-alerts-card:hover,
+.upcoming-events-card:hover,
+.mindshare-card:hover,
+.liquidation-tracker-card:hover,
+.funding-rates-card:hover {
+  border-color: rgba(46, 219, 132, 0.45);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    0 0 35px -10px rgba(46, 219, 132, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transform: translateY(-2px);
+}
+
+/* Subtle corner accents */
+.price-chart-card::before,
+.global-metrics-card::before,
+.fear-greed-card::before,
+.top-movers-card::before,
+.coin-rankings-card::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 20px;
+  right: 20px;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(46, 219, 132, 0.5) 50%,
+    transparent 100%);
+  opacity: 0.6;
+}
+
+/* Bottom accent line */
+.price-chart-card::after,
+.global-metrics-card::after,
+.fear-greed-card::after,
+.top-movers-card::after,
+.coin-rankings-card::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 30%;
+  right: 30%;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(46, 219, 132, 0.3) 50%,
+    transparent 100%);
+  opacity: 0.4;
+}
+
+/* Different accent colors for variety */
+.vc-funding-card {
+  border-color: rgba(139, 92, 246, 0.25);
+}
+.vc-funding-card:hover {
+  border-color: rgba(139, 92, 246, 0.45);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    0 0 35px -10px rgba(139, 92, 246, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.nft-leaderboard-card {
+  border-color: rgba(236, 72, 153, 0.25);
+}
+.nft-leaderboard-card:hover {
+  border-color: rgba(236, 72, 153, 0.45);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    0 0 35px -10px rgba(236, 72, 153, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.chain-flows-card {
+  border-color: rgba(59, 130, 246, 0.25);
+}
+.chain-flows-card:hover {
+  border-color: rgba(59, 130, 246, 0.45);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    0 0 35px -10px rgba(59, 130, 246, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* ==================== TIER CARD STYLES ==================== */
+/* 3D Credit Card styled tier cards for Abstract Dashboard */
+
+.tier-card-wrapper {
+  perspective: 1000px;
+}
+
+.tier-card {
+  position: relative;
+  width: 100%;
+  min-height: 160px;
+  padding: 1.25rem;
+  border-radius: 16px;
+  overflow: hidden;
+  transform-style: preserve-3d;
+  transition: transform 0.15s ease-out;
+  cursor: default;
+}
+
+.tier-card-glint {
+  position: absolute;
+  inset: 0;
+  opacity: 0.15;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+
+.tier-card-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  min-height: 120px;
+}
+
+.tier-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.tier-card-label {
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+
+.tier-card-divider {
+  width: 40px;
+  height: 3px;
+  margin-top: 0.5rem;
+  border-radius: 2px;
+}
+
+.tier-card-count {
+  font-size: 2rem;
+  font-weight: 800;
+  margin: 0;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.tier-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.tier-card-meta-label {
+  display: block;
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.6;
+}
+
+.tier-card-meta-value {
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.tier-card-logo {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.tier-card-logo-circle {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  opacity: 0.6;
+}
+
+/* Bronze Tier */
+.tier-card.bronze {
+  background: linear-gradient(145deg, #8B4513 0%, #CD853F 50%, #8B4513 100%);
+  box-shadow: 0 10px 40px rgba(139, 69, 19, 0.4);
+}
+.tier-card.bronze .tier-card-label { color: #FFE4C4; }
+.tier-card.bronze .tier-card-divider { background: #FFE4C4; }
+.tier-card.bronze .tier-card-count { color: #FFF8DC; }
+.tier-card.bronze .tier-card-meta-label { color: #FFE4C4; }
+.tier-card.bronze .tier-card-meta-value { color: #FFF8DC; }
+.tier-card.bronze .tier-card-logo-circle { background: #FFE4C4; }
+
+/* Silver Tier */
+.tier-card.silver {
+  background: linear-gradient(145deg, #708090 0%, #C0C0C0 50%, #708090 100%);
+  box-shadow: 0 10px 40px rgba(192, 192, 192, 0.3);
+}
+.tier-card.silver .tier-card-label { color: #F5F5F5; }
+.tier-card.silver .tier-card-divider { background: #F5F5F5; }
+.tier-card.silver .tier-card-count { color: #FFFFFF; }
+.tier-card.silver .tier-card-meta-label { color: #E8E8E8; }
+.tier-card.silver .tier-card-meta-value { color: #FFFFFF; }
+.tier-card.silver .tier-card-logo-circle { background: #F5F5F5; }
+
+/* Gold Tier */
+.tier-card.gold {
+  background: linear-gradient(145deg, #B8860B 0%, #FFD700 50%, #B8860B 100%);
+  box-shadow: 0 10px 40px rgba(255, 215, 0, 0.4);
+}
+.tier-card.gold .tier-card-label { color: #FFFACD; }
+.tier-card.gold .tier-card-divider { background: #FFFACD; }
+.tier-card.gold .tier-card-count { color: #FFFFFF; }
+.tier-card.gold .tier-card-meta-label { color: #FFFACD; }
+.tier-card.gold .tier-card-meta-value { color: #FFFFFF; }
+.tier-card.gold .tier-card-logo-circle { background: #FFFACD; }
+
+/* Platinum Tier */
+.tier-card.platinum {
+  background: linear-gradient(145deg, #4A5568 0%, #A0AEC0 30%, #E2E8F0 50%, #A0AEC0 70%, #4A5568 100%);
+  box-shadow: 0 10px 40px rgba(160, 174, 192, 0.4);
+}
+.tier-card.platinum .tier-card-label { color: #F7FAFC; }
+.tier-card.platinum .tier-card-divider { background: #F7FAFC; }
+.tier-card.platinum .tier-card-count { color: #FFFFFF; }
+.tier-card.platinum .tier-card-meta-label { color: #E2E8F0; }
+.tier-card.platinum .tier-card-meta-value { color: #FFFFFF; }
+.tier-card.platinum .tier-card-logo-circle { background: #E2E8F0; }
+
+/* Diamond Tier */
+.tier-card.diamond {
+  background: linear-gradient(145deg, #1E3A5F 0%, #4ECDC4 25%, #87CEEB 50%, #4ECDC4 75%, #1E3A5F 100%);
+  box-shadow: 0 10px 40px rgba(78, 205, 196, 0.4);
+}
+.tier-card.diamond .tier-card-label { color: #E0FFFF; }
+.tier-card.diamond .tier-card-divider { background: #E0FFFF; }
+.tier-card.diamond .tier-card-count { color: #FFFFFF; }
+.tier-card.diamond .tier-card-meta-label { color: #E0FFFF; }
+.tier-card.diamond .tier-card-meta-value { color: #FFFFFF; }
+.tier-card.diamond .tier-card-logo-circle { background: #87CEEB; }
+
+/* Obsidian Tier */
+.tier-card.obsidian {
+  background: linear-gradient(145deg, #0a0a0a 0%, #1a1a2e 25%, #2d2d44 50%, #1a1a2e 75%, #0a0a0a 100%);
+  box-shadow: 0 10px 40px rgba(46, 219, 132, 0.3), inset 0 0 60px rgba(46, 219, 132, 0.1);
+  border: 1px solid rgba(46, 219, 132, 0.3);
+}
+.tier-card.obsidian .tier-card-label { color: #2edb84; }
+.tier-card.obsidian .tier-card-divider { background: linear-gradient(90deg, #2edb84, #25b36d); }
+.tier-card.obsidian .tier-card-count { color: #2edb84; }
+.tier-card.obsidian .tier-card-meta-label { color: rgba(46, 219, 132, 0.7); }
+.tier-card.obsidian .tier-card-meta-value { color: #2edb84; }
+.tier-card.obsidian .tier-card-logo-circle { background: #2edb84; }
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .tier-card {
+    min-height: 140px;
+    padding: 1rem;
+  }
+  .tier-card-count {
+    font-size: 1.5rem;
+  }
+  .tier-card-label {
+    font-size: 0.8rem;
+  }
 }

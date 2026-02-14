@@ -3,34 +3,29 @@
 import { useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import NavBar from '@/components/NavBar';
-import { GlobalMetrics, FearGreedIndex, TopMovers, CoinRankings, ChainFlows, VCFunding, NetFlows, NFTLeaderboard, SectorPerformance, WhaleAlerts, UpcomingEvents, PriceChart } from '@/components/crypto';
-import { useCryptoPrices, useGlobalMetrics, useNews, useChains } from '@/lib/crypto/hooks';
+import { GlobalMetrics, FearGreedIndex, TopMovers, CoinRankings, ChainFlows, VCFunding, NetFlows, NFTLeaderboard } from '@/components/crypto';
+import { useCryptoPrices, useGlobalMetrics, useChains } from '@/lib/crypto/hooks';
 
 // Dynamically import DraggableDashboard to avoid SSR issues with dnd-kit
 const DraggableDashboard = dynamic(() => import('@/components/DraggableDashboard'), { ssr: false });
 
-// Dynamically import MindshareBubbles separately as it might have issues
-const MindshareBubbles = dynamic(() => import('@/components/crypto/MindshareBubbles').then(mod => ({ default: mod.default })), { ssr: false });
+// Dynamically import SectorPerformance separately as it contains complex rendering
+const SectorPerformance = dynamic(() => import('@/components/crypto/SectorPerformance').then(mod => ({ default: mod.default })), { ssr: false });
 
 export default function MarketAnalysisPage() {
   const { prices, isLoading: pricesLoading, lastUpdated: pricesUpdated } = useCryptoPrices();
   const { global, fearGreed, gas, isLoading: globalLoading, lastUpdated: globalUpdated } = useGlobalMetrics();
-  const { news, isLoading: newsLoading } = useNews();
   const { chains, isLoading: chainsLoading } = useChains();
 
   const modules = useMemo(() => [
-    { id: 'price-chart', component: <div className="full-width-module"><PriceChart /></div> },
     { id: 'top-movers', component: <TopMovers coins={prices} isLoading={pricesLoading} lastUpdated={pricesUpdated} /> },
-    { id: 'sector-performance', component: <SectorPerformance /> },
+    { id: 'market-heatmap', component: <SectorPerformance coins={prices} isLoading={pricesLoading} /> },
     { id: 'nft-leaderboard', component: <NFTLeaderboard /> },
-    { id: 'mindshare', component: <MindshareBubbles coins={prices} news={news} isLoading={pricesLoading || newsLoading} /> },
     { id: 'coin-rankings', component: <CoinRankings coins={prices} isLoading={pricesLoading} lastUpdated={pricesUpdated} /> },
-    { id: 'whale-alerts', component: <WhaleAlerts /> },
-    { id: 'upcoming-events', component: <UpcomingEvents /> },
     { id: 'chain-tvl', component: <ChainFlows chains={chains} isLoading={chainsLoading} /> },
     { id: 'net-flows', component: <NetFlows /> },
     { id: 'vc-funding', component: <VCFunding /> },
-  ], [prices, pricesLoading, pricesUpdated, news, newsLoading, chains, chainsLoading]);
+  ], [prices, pricesLoading, pricesUpdated, chains, chainsLoading]);
 
   return (
     <main className="container">

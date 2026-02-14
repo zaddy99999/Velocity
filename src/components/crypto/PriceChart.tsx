@@ -33,6 +33,7 @@ interface MarketHistoryData {
 
 type ChartType = 'marketcap' | 'dominance' | 'volume' | 'tvl';
 type TimePeriod = '1' | '7' | '30' | '90';
+type ScaleType = 'linear' | 'log';
 
 const CHART_TYPES: { value: ChartType; label: string }[] = [
   { value: 'marketcap', label: 'Market Cap' },
@@ -46,6 +47,7 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 export default function PriceChart() {
   const [chartType, setChartType] = useState<ChartType>('marketcap');
   const [period, setPeriod] = useState<TimePeriod>('7');
+  const [scale, setScale] = useState<ScaleType>('log'); // Default to log for visibility
 
   const { data: marketData, isLoading: marketLoading } = useSWR<MarketHistoryData>(
     `/api/crypto/market-history?days=${period}`,
@@ -121,9 +123,45 @@ export default function PriceChart() {
     return `$${(value / 1e6).toFixed(0)}M`;
   };
 
+  // Calculate dynamic domain based on enabled coins
+  const calculateDomain = (data: any[], enabledCoins: Set<string>) => {
+    if (!data || data.length === 0) return ['auto', 'auto'];
+
+    let min = Infinity;
+    let max = -Infinity;
+
+    const enabledArray = Array.from(enabledCoins);
+    for (const point of data) {
+      for (const symbol of enabledArray) {
+        const value = point[symbol];
+        if (typeof value === 'number' && value > 0) {
+          min = Math.min(min, value);
+          max = Math.max(max, value);
+        }
+      }
+    }
+
+    if (min === Infinity || max === -Infinity) return ['auto', 'auto'];
+
+    // Add padding: 10% below min, 10% above max (in log space for log scale)
+    if (scale === 'log') {
+      const logMin = Math.log10(min);
+      const logMax = Math.log10(max);
+      const logRange = logMax - logMin;
+      const paddedLogMin = logMin - logRange * 0.1;
+      const paddedLogMax = logMax + logRange * 0.05;
+      return [Math.pow(10, paddedLogMin), Math.pow(10, paddedLogMax)];
+    } else {
+      const range = max - min;
+      return [Math.max(0, min - range * 0.1), max + range * 0.05];
+    }
+  };
+
   // Render market cap chart
   const renderMarketCapChart = () => {
     if (!marketData?.marketCap) return <div className="chart-placeholder">Loading market data...</div>;
+
+    const domain = calculateDomain(marketData.marketCap, enabledMarketCoins);
 
     return (
       <>
@@ -152,7 +190,17 @@ export default function PriceChart() {
           <LineChart data={marketData.marketCap} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
             <XAxis dataKey="timestamp" tickFormatter={formatDate} stroke="#666" fontSize={10} tickLine={false} axisLine={false} />
-            <YAxis tickFormatter={(v) => formatValue(v, 'marketcap')} stroke="#666" fontSize={10} tickLine={false} axisLine={false} width={55} />
+            <YAxis
+              tickFormatter={(v) => formatValue(v, 'marketcap')}
+              stroke="#666"
+              fontSize={10}
+              tickLine={false}
+              axisLine={false}
+              width={55}
+              scale={scale}
+              domain={domain}
+              allowDataOverflow={true}
+            />
             <Tooltip
               contentStyle={{ background: 'rgba(0,0,0,0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', fontSize: '12px' }}
               labelFormatter={(ts) => new Date(ts).toLocaleString()}
@@ -215,6 +263,8 @@ export default function PriceChart() {
   const renderVolumeChart = () => {
     if (!marketData?.volume) return <div className="chart-placeholder">Loading volume data...</div>;
 
+    const domain = calculateDomain(marketData.volume, enabledMarketCoins);
+
     return (
       <>
         <div className="coin-toggles-with-logos">
@@ -242,7 +292,17 @@ export default function PriceChart() {
           <LineChart data={marketData.volume} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
             <XAxis dataKey="timestamp" tickFormatter={formatDate} stroke="#666" fontSize={10} tickLine={false} axisLine={false} />
-            <YAxis tickFormatter={(v) => formatValue(v, 'volume')} stroke="#666" fontSize={10} tickLine={false} axisLine={false} width={55} />
+            <YAxis
+              tickFormatter={(v) => formatValue(v, 'volume')}
+              stroke="#666"
+              fontSize={10}
+              tickLine={false}
+              axisLine={false}
+              width={55}
+              scale={scale}
+              domain={domain}
+              allowDataOverflow={true}
+            />
             <Tooltip
               contentStyle={{ background: 'rgba(0,0,0,0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', fontSize: '12px' }}
               labelFormatter={(ts) => new Date(ts).toLocaleString()}
@@ -334,6 +394,15 @@ export default function PriceChart() {
               </button>
             ))}
           </div>
+          {(chartType === 'marketcap' || chartType === 'volume') && (
+            <button
+              className={`chart-toggle scale-toggle ${scale === 'log' ? 'active' : ''}`}
+              onClick={() => setScale(scale === 'log' ? 'linear' : 'log')}
+              title={scale === 'log' ? 'Switch to linear scale' : 'Switch to log scale'}
+            >
+              {scale === 'log' ? 'LOG' : 'LIN'}
+            </button>
+          )}
         </div>
       </div>
 

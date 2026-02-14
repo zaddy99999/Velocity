@@ -11,6 +11,7 @@ type Role = 'Elite Chad' | 'Graduated Elite Chad' | 'Gigachad';
 interface XPPreset {
   name: string;
   image: string | null;
+  video: string | null;
   displayName: string;
   xp: string;
   level: string;
@@ -18,8 +19,12 @@ interface XPPreset {
 }
 
 const XP_PRESETS: XPPreset[] = [
-  { name: 'Hammie', image: '/HammieBannerBigger.gif', displayName: '', xp: '', level: '', joinDate: '' },
-  { name: 'Custom', image: null, displayName: '', xp: '', level: '', joinDate: '' },
+  { name: 'Hammie', image: '/HammieBannerBigger.gif', video: null, displayName: '', xp: '', level: '', joinDate: '' },
+  { name: 'Clip 1', image: null, video: '/hamie_clip_1.mp4', displayName: '', xp: '', level: '', joinDate: '' },
+  { name: 'Clip 2', image: null, video: '/hamie_clip_2.mp4', displayName: '', xp: '', level: '', joinDate: '' },
+  { name: 'Clip 3', image: null, video: '/hamie_clip_3.mp4', displayName: '', xp: '', level: '', joinDate: '' },
+  { name: 'Clip 4', image: null, video: '/hamie_clip_4.mp4', displayName: '', xp: '', level: '', joinDate: '' },
+  { name: 'Custom', image: null, video: null, displayName: '', xp: '', level: '', joinDate: '' },
 ];
 
 export default function XPCardPage() {
@@ -35,6 +40,7 @@ export default function XPCardPage() {
   // XP Card state
   const [xpProfileImage, setXpProfileImage] = useState<string | null>('/ZaddyPFP.png');
   const [xpBackgroundImage, setXpBackgroundImage] = useState<string | null>('/HammieBannerBigger.gif');
+  const [xpBackgroundVideo, setXpBackgroundVideo] = useState<string | null>(null);
   const [xpDisplayName, setXpDisplayName] = useState('Zaddy');
   const [xpAmount, setXpAmount] = useState('69,000');
   const [level, setLevel] = useState('');
@@ -46,6 +52,7 @@ export default function XPCardPage() {
     if (preset) {
       setSelectedPreset(presetName);
       setXpBackgroundImage(preset.image);
+      setXpBackgroundVideo(preset.video);
     }
   };
 
@@ -245,9 +252,20 @@ export default function XPCardPage() {
                       key={preset.name}
                       className={`xp-preset-card ${selectedPreset === preset.name ? 'active' : ''}`}
                       onClick={() => applyPreset(preset.name)}
+                      title={preset.name}
                     >
                       {preset.image ? (
                         <img src={preset.image} alt={preset.name} />
+                      ) : preset.video ? (
+                        <video
+                          key={preset.video}
+                          src={preset.video}
+                          muted
+                          loop
+                          autoPlay
+                          playsInline
+                          style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }}
+                        />
                       ) : (
                         <span className="xp-preset-placeholder">+</span>
                       )}
@@ -329,12 +347,32 @@ export default function XPCardPage() {
               </div>
             ) : (
               /* XP Card Preview */
-              <div ref={cardRef} className="abstract-xp-card" style={xpBackgroundImage ? { backgroundImage: `url(${xpBackgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}>
-                <div className="abstract-xp-header">
+              <div ref={cardRef} className="abstract-xp-card" style={xpBackgroundImage && !xpBackgroundVideo ? { backgroundImage: `url(${xpBackgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}>
+                {xpBackgroundVideo && (
+                  <video
+                    key={xpBackgroundVideo}
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      zIndex: 0,
+                      borderRadius: '16px',
+                    }}
+                    src={xpBackgroundVideo}
+                  />
+                )}
+                <div className="abstract-xp-header" style={{ position: 'relative', zIndex: 1 }}>
                   <span className="abstract-xp-title">ABSTRACT XP CARD</span>
                   <img src="/abspfp.png" alt="Abstract" className="abstract-xp-logo" />
                 </div>
-                <div className="abstract-xp-content">
+                <div className="abstract-xp-content" style={{ position: 'relative', zIndex: 1 }}>
                   <div className="abstract-xp-avatar">
                     {xpProfileImage ? (
                       <img src={xpProfileImage} alt="Profile" />
@@ -352,7 +390,7 @@ export default function XPCardPage() {
                     </div>
                   </div>
                 </div>
-                <span className="card-watermark">ZaddyTools</span>
+                <span className="card-watermark" style={{ position: 'relative', zIndex: 1 }}>ZaddyTools</span>
               </div>
             )}
           </div>

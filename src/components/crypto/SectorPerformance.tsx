@@ -1,7 +1,17 @@
 'use client';
 
+import { useState, useMemo } from 'react';
 import useSWR from 'swr';
 import { formatCompactNumber } from '@/lib/crypto/formatters';
+import type { CoinMarketData } from '@/lib/crypto/types';
+
+type ViewType = 'sectors' | 'coins';
+type TimePeriod = '1h' | '24h' | '7d' | '30d';
+
+interface SectorPerformanceProps {
+  coins?: CoinMarketData[];
+  isLoading?: boolean;
+}
 
 interface Sector {
   id: string;
@@ -12,75 +22,403 @@ interface Sector {
   topCoins: string[];
 }
 
-const fetcher = (url: string) => fetch(url).then(res => res.json());
-
-function getHeatmapColor(change: number): string {
-  // Clamp change between -10 and +10 for color intensity
-  const clamped = Math.max(-10, Math.min(10, change));
-  const intensity = Math.abs(clamped) / 10;
-
-  if (change >= 0) {
-    // Green gradient
-    const r = Math.round(34 - intensity * 20);
-    const g = Math.round(197 - intensity * 50);
-    const b = Math.round(94 - intensity * 50);
-    return `rgba(${r}, ${g}, ${b}, ${0.3 + intensity * 0.5})`;
-  } else {
-    // Red gradient
-    const r = Math.round(239);
-    const g = Math.round(68 - intensity * 30);
-    const b = Math.round(68 - intensity * 30);
-    return `rgba(${r}, ${g}, ${b}, ${0.3 + intensity * 0.5})`;
-  }
+interface TreemapRect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  data: Sector;
 }
 
-export default function SectorPerformance() {
-  const { data: sectors, isLoading } = useSWR<Sector[]>('/api/crypto/sectors', fetcher, {
+interface CoinRect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  data: {
+    id: string;
+    symbol: string;
+    name: string;
+    image: string;
+    marketCap: number;
+    change: number;
+  };
+}
+
+const fetcher = (url: string) => fetch(url).then(res => res.json());
+
+const getPriceChange = (coin: CoinMarketData, period: TimePeriod): number => {
+  switch (period) {
+    case '1h':
+      return coin.price_change_percentage_1h_in_currency ?? 0;
+    case '24h':
+      return coin.price_change_percentage_24h ?? 0;
+    case '7d':
+      return coin.price_change_percentage_7d_in_currency ?? 0;
+    case '30d':
+      return coin.price_change_percentage_30d_in_currency ?? 0;
+    default:
+      return coin.price_change_percentage_24h ?? 0;
+  }
+};
+
+// Get color based on price change for coins view
+const getChangeColor = (change: number): string => {
+  if (change >= 10) return 'rgba(34, 197, 94, 0.9)';
+  if (change >= 5) return 'rgba(34, 197, 94, 0.7)';
+  if (change >= 2) return 'rgba(34, 197, 94, 0.5)';
+  if (change >= 0) return 'rgba(34, 197, 94, 0.3)';
+  if (change >= -2) return 'rgba(239, 68, 68, 0.3)';
+  if (change >= -5) return 'rgba(239, 68, 68, 0.5)';
+  if (change >= -10) return 'rgba(239, 68, 68, 0.7)';
+  return 'rgba(239, 68, 68, 0.9)';
+};
+
+// Generate consistent colors based on sector name
+function getSectorColor(name: string): string {
+  const colors = [
+    'rgba(46, 219, 132, 0.6)',   // Green
+    'rgba(99, 102, 241, 0.6)',   // Indigo
+    'rgba(236, 72, 153, 0.6)',   // Pink
+    'rgba(245, 158, 11, 0.6)',   // Amber
+    'rgba(14, 165, 233, 0.6)',   // Sky
+    'rgba(168, 85, 247, 0.6)',   // Purple
+    'rgba(34, 197, 94, 0.6)',    // Emerald
+    'rgba(249, 115, 22, 0.6)',   // Orange
+    'rgba(6, 182, 212, 0.6)',    // Cyan
+    'rgba(139, 92, 246, 0.6)',   // Violet
+    'rgba(16, 185, 129, 0.6)',   // Teal
+    'rgba(244, 63, 94, 0.6)',    // Rose
+  ];
+  const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return colors[hash % colors.length];
+}
+
+// Generic squarified treemap algorithm
+function createTreemap<T>(items: { value: number; data: T }[], width: number, height: number): { x: number; y: number; width: number; height: number; data: T }[] {
+  const total = items.reduce((sum, item) => sum + Math.max(item.value, 0.001), 0);
+  if (total === 0 || items.length === 0) return [];
+
+  const normalized = items
+    .map(item => ({ value: Math.max(item.value, 0.001) / total, data: item.data }))
+    .sort((a, b) => b.value - a.value);
+
+  const rects: { x: number; y: number; width: number; height: number; data: T }[] = [];
+
+  function squarifyRecursive(
+    items: typeof normalized,
+    x: number,
+    y: number,
+    w: number,
+    h: number
+  ) {
+    if (items.length === 0) return;
+    if (items.length === 1) {
+      rects.push({ x, y, width: w, height: h, data: items[0].data });
+      return;
+    }
+
+    const totalValue = items.reduce((sum, item) => sum + item.value, 0);
+    const isWide = w >= h;
+    const side = isWide ? h : w;
+
+    let bestRow: typeof normalized = [];
+    let bestWorstAspect = Infinity;
+    let bestRowValue = 0;
+    let currentRow: typeof normalized = [];
+    let currentRowValue = 0;
+
+    for (let i = 0; i < items.length; i++) {
+      currentRow.push(items[i]);
+      currentRowValue += items[i].value;
+
+      const stripSize = (currentRowValue / totalValue) * (isWide ? w : h);
+      let worstAspect = 0;
+      for (const item of currentRow) {
+        const itemSize = (item.value / currentRowValue) * side;
+        const aspect = Math.max(stripSize / itemSize, itemSize / stripSize);
+        worstAspect = Math.max(worstAspect, aspect);
+      }
+
+      if (worstAspect <= bestWorstAspect) {
+        bestWorstAspect = worstAspect;
+        bestRow = [...currentRow];
+        bestRowValue = currentRowValue;
+      } else {
+        break;
+      }
+    }
+
+    const stripFraction = bestRowValue / totalValue;
+
+    if (isWide) {
+      const stripWidth = w * stripFraction;
+      let itemY = y;
+      for (const item of bestRow) {
+        const itemHeight = side * (item.value / bestRowValue);
+        rects.push({ x, y: itemY, width: stripWidth, height: itemHeight, data: item.data });
+        itemY += itemHeight;
+      }
+      const remaining = items.slice(bestRow.length);
+      if (remaining.length > 0) {
+        squarifyRecursive(remaining, x + stripWidth, y, w - stripWidth, h);
+      }
+    } else {
+      const stripHeight = h * stripFraction;
+      let itemX = x;
+      for (const item of bestRow) {
+        const itemWidth = side * (item.value / bestRowValue);
+        rects.push({ x: itemX, y, width: itemWidth, height: stripHeight, data: item.data });
+        itemX += itemWidth;
+      }
+      const remaining = items.slice(bestRow.length);
+      if (remaining.length > 0) {
+        squarifyRecursive(remaining, x, y + stripHeight, w, h - stripHeight);
+      }
+    }
+  }
+
+  squarifyRecursive(normalized, 0, 0, width, height);
+  return rects;
+}
+
+export default function SectorPerformance({ coins = [], isLoading: coinsLoading }: SectorPerformanceProps) {
+  const [view, setView] = useState<ViewType>('coins');
+  const [period, setPeriod] = useState<TimePeriod>('24h');
+
+  const { data: sectors, isLoading: sectorsLoading } = useSWR<Sector[]>('/api/crypto/sectors', fetcher, {
     refreshInterval: 60000,
   });
+
+  const containerHeight = 320; // pixels
+  const padding = 2;
+  const svgWidth = 600;
+  const svgHeight = containerHeight;
+
+  // Prepare coin data for treemap
+  const coinRects = useMemo(() => {
+    if (!coins || coins.length === 0) return [];
+    const topCoins = coins.slice(0, 20);
+    const coinItems = topCoins.map(coin => ({
+      value: Math.sqrt(coin.market_cap), // sqrt scale for balanced sizes
+      data: {
+        id: coin.id,
+        symbol: coin.symbol.toUpperCase(),
+        name: coin.name,
+        image: coin.image,
+        marketCap: coin.market_cap,
+        change: getPriceChange(coin, period),
+      }
+    }));
+    return createTreemap(coinItems, svgWidth, svgHeight);
+  }, [coins, period]);
+
+  // Prepare sector data for treemap
+  const sectorRects = useMemo(() => {
+    if (!sectors || sectors.length === 0) return [];
+    const sorted = [...sectors].sort((a, b) => b.marketCap - a.marketCap).slice(0, 12);
+    const sectorItems = sorted.map(s => ({ value: Math.sqrt(s.marketCap), data: s }));
+    return createTreemap(sectorItems, svgWidth, svgHeight);
+  }, [sectors]);
+
+  const isLoading = view === 'coins' ? coinsLoading : sectorsLoading;
 
   if (isLoading) {
     return (
       <div className="widget-card">
-        <p className="widget-label">📊 Sectors</p>
-        <div className="sector-heatmap loading">
-          {[...Array(12)].map((_, i) => (
-            <div key={i} className="skeleton sector-tile-skeleton" />
-          ))}
+        <div className="heatmap-header-row">
+          <p className="widget-label" style={{ margin: 0 }}>Market Heatmap</p>
         </div>
+        <div className="skeleton" style={{ height: containerHeight }} />
       </div>
     );
   }
 
-  if (!sectors || sectors.length === 0) {
+  const isEmpty = view === 'coins' ? coins.length === 0 : (!sectors || sectors.length === 0);
+  if (isEmpty) {
     return (
       <div className="widget-card">
-        <p className="widget-label">📊 Sectors</p>
-        <p className="widget-empty">No sector data</p>
+        <div className="heatmap-header-row">
+          <p className="widget-label" style={{ margin: 0 }}>Market Heatmap</p>
+        </div>
+        <p className="widget-empty">No data available</p>
       </div>
     );
   }
-
-  // Sort by market cap for sizing
-  const sorted = [...sectors].sort((a, b) => b.marketCap - a.marketCap);
 
   return (
     <div className="widget-card">
-      <p className="widget-label">📊 Sectors</p>
-      <div className="sector-heatmap">
-        {sorted.slice(0, 12).map((sector, idx) => (
-          <div
-            key={sector.id}
-            className={`sector-tile ${idx < 4 ? 'large' : ''}`}
-            style={{ background: getHeatmapColor(sector.change24h) }}
-          >
-            <span className="sector-tile-name">{sector.name}</span>
-            <span className={`sector-tile-change ${sector.change24h >= 0 ? 'positive' : 'negative'}`}>
-              {sector.change24h >= 0 ? '+' : ''}{sector.change24h.toFixed(1)}%
-            </span>
-            <span className="sector-tile-mcap">${formatCompactNumber(sector.marketCap)}</span>
+      <div className="heatmap-header-row">
+        <p className="widget-label" style={{ margin: 0 }}>Market Heatmap</p>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          {/* View Toggle */}
+          <div className="heatmap-toggles">
+            <button
+              className={`heatmap-toggle ${view === 'coins' ? 'active' : ''}`}
+              onClick={() => setView('coins')}
+            >
+              Coins
+            </button>
+            <button
+              className={`heatmap-toggle ${view === 'sectors' ? 'active' : ''}`}
+              onClick={() => setView('sectors')}
+            >
+              Sectors
+            </button>
           </div>
-        ))}
+          {/* Period Toggle (only for coins view) */}
+          {view === 'coins' && (
+            <div className="heatmap-toggles" style={{ marginLeft: '0.5rem' }}>
+              {(['1h', '24h', '7d', '30d'] as TimePeriod[]).map((p) => (
+                <button
+                  key={p}
+                  className={`heatmap-toggle ${period === p ? 'active' : ''}`}
+                  onClick={() => setPeriod(p)}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div style={{ width: '100%', height: containerHeight, position: 'relative' }}>
+        <svg
+          viewBox={`0 0 ${svgWidth} ${svgHeight}`}
+          style={{ width: '100%', height: '100%', display: 'block' }}
+          preserveAspectRatio="none"
+        >
+          {view === 'coins' ? (
+            // Coins heatmap
+            coinRects.map((rect) => {
+              const coin = rect.data;
+              const tileX = rect.x + padding;
+              const tileY = rect.y + padding;
+              const tileW = Math.max(rect.width - padding * 2, 0);
+              const tileH = Math.max(rect.height - padding * 2, 0);
+              const minDim = Math.min(tileW, tileH);
+
+              const showSymbol = minDim > 30;
+              const showChange = minDim > 45;
+              const showMcap = minDim > 60;
+
+              const symbolFontSize = Math.min(Math.max(minDim / 4, 10), 18);
+              const changeFontSize = Math.min(Math.max(minDim / 5, 9), 14);
+              const mcapFontSize = Math.min(Math.max(minDim / 6, 8), 12);
+
+              const isPositive = coin.change >= 0;
+
+              return (
+                <a
+                  key={coin.id}
+                  href={`https://www.coingecko.com/en/coins/${coin.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <g style={{ cursor: 'pointer' }}>
+                    <rect
+                      x={tileX}
+                      y={tileY}
+                      width={tileW}
+                      height={tileH}
+                      fill={getChangeColor(coin.change)}
+                      rx={6}
+                    />
+                    {showSymbol && (
+                      <text
+                        x={tileX + tileW / 2}
+                        y={tileY + tileH / 2 - (showChange ? changeFontSize / 2 : 0)}
+                        fill="white"
+                        fontSize={symbolFontSize}
+                        fontWeight="700"
+                        fontFamily="system-ui, -apple-system, sans-serif"
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}
+                      >
+                        {coin.symbol}
+                      </text>
+                    )}
+                    {showChange && (
+                      <text
+                        x={tileX + tileW / 2}
+                        y={tileY + tileH / 2 + symbolFontSize / 2 + 4}
+                        fill="white"
+                        fontSize={changeFontSize}
+                        fontWeight="600"
+                        fontFamily="system-ui, -apple-system, sans-serif"
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}
+                      >
+                        {isPositive ? '+' : ''}{coin.change.toFixed(1)}%
+                      </text>
+                    )}
+                  </g>
+                </a>
+              );
+            })
+          ) : (
+            // Sectors heatmap
+            sectorRects.map((rect) => {
+              const sector = rect.data;
+              const tileX = rect.x + padding;
+              const tileY = rect.y + padding;
+              const tileW = Math.max(rect.width - padding * 2, 0);
+              const tileH = Math.max(rect.height - padding * 2, 0);
+              const minDim = Math.min(tileW, tileH);
+
+              const showName = minDim > 40;
+              const showMcap = minDim > 70;
+
+              const nameFontSize = Math.min(Math.max(minDim / 5, 11), 16);
+              const mcapFontSize = Math.min(Math.max(minDim / 7, 9), 12);
+
+              return (
+                <g key={sector.id}>
+                  <rect
+                    x={tileX}
+                    y={tileY}
+                    width={tileW}
+                    height={tileH}
+                    fill={getSectorColor(sector.name)}
+                    rx={6}
+                    style={{ cursor: 'default' }}
+                  />
+                  {showName && (
+                    <text
+                      x={tileX + 8}
+                      y={tileY + nameFontSize + 6}
+                      fill="white"
+                      fontSize={nameFontSize}
+                      fontWeight="700"
+                      fontFamily="system-ui, -apple-system, sans-serif"
+                      style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}
+                    >
+                      {sector.name.length > Math.floor(tileW / 8)
+                        ? sector.name.slice(0, Math.floor(tileW / 8)) + '…'
+                        : sector.name}
+                    </text>
+                  )}
+                  {showMcap && (
+                    <text
+                      x={tileX + 8}
+                      y={tileY + nameFontSize + mcapFontSize + 10}
+                      fill="rgba(255,255,255,0.9)"
+                      fontSize={mcapFontSize}
+                      fontWeight="600"
+                      fontFamily="system-ui, -apple-system, sans-serif"
+                      style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}
+                    >
+                      ${formatCompactNumber(sector.marketCap)}
+                    </text>
+                  )}
+                </g>
+              );
+            })
+          )}
+        </svg>
       </div>
     </div>
   );

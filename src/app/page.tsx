@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import ChannelTable from '@/components/ChannelTable';
 import NavBar from '@/components/NavBar';
-import StatsOverview from '@/components/StatsOverview';
 import ComparisonView from '@/components/ComparisonView';
 import NotificationCenter from '@/components/NotificationCenter';
 import SearchAutocomplete from '@/components/SearchAutocomplete';
@@ -245,40 +244,6 @@ function HomeContent() {
     }
   };
 
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
-        return;
-      }
-
-      if (e.key === 'Escape' && showSuggestModal) {
-        setShowSuggestModal(false);
-        return;
-      }
-
-      if (e.metaKey || e.ctrlKey) {
-        switch (e.key) {
-          case 's':
-            e.preventDefault();
-            setShowSuggestModal(true);
-            break;
-        }
-        return;
-      }
-
-      if (e.key === '1') setActiveTab('giphy');
-      if (e.key === '2') setActiveTab('tiktok');
-      if (e.key === '3') setActiveTab('youtube');
-      if (e.key === 'g' || e.key === 'G') setActiveTab('giphy');
-      if (e.key === 't' || e.key === 'T') setActiveTab('tiktok');
-      if (e.key === 'y' || e.key === 'Y') setActiveTab('youtube');
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showSuggestModal]);
-
   // Check if we have enough data for different time periods
   const hasMultipleDays = channels.some(ch => ch.delta1d !== null && ch.delta1d !== 0);
 
@@ -409,9 +374,6 @@ function HomeContent() {
 
       {error && <div className="error-message">{error}</div>}
 
-      {/* Stats Overview */}
-      <StatsOverview channels={channels} lastUpdated={lastUpdated} />
-
       {/* Suggestion Modal */}
       {showSuggestModal && (
         <div className="modal-overlay modal-enter" onClick={() => setShowSuggestModal(false)}>
@@ -419,7 +381,7 @@ function HomeContent() {
             <div className="modal-header">
               <div>
                 <h3>Suggest a Project</h3>
-                <p className="modal-subtitle">Help us track more projects. Press Esc to close.</p>
+                <p className="modal-subtitle">Help us track more projects.</p>
               </div>
               <button className="modal-close btn-micro" onClick={() => setShowSuggestModal(false)} aria-label="Close modal">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -593,7 +555,6 @@ function HomeContent() {
         <button
           className="suggest-btn btn-micro"
           onClick={() => setShowSuggestModal(true)}
-          title="Press Ctrl/Cmd + S"
         >
           + Suggest Addition
         </button>

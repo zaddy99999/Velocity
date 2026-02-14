@@ -19,6 +19,7 @@ const typeEmoji: Record<string, string> = {
   upgrade: '⬆️',
   airdrop: '🪂',
   listing: '📋',
+  conference: '🎤',
   other: '📅',
 };
 

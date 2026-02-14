@@ -6,15 +6,38 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 
 // Runescape-style skill calculation from wallet data
 interface WalletSkills {
-  trading: number;      // Trading volume → level
-  collecting: number;   // NFT count → level
-  exploring: number;    // Contracts interacted → level
-  holding: number;      // Balance + age → level
-  speed: number;        // Tx per active day → level
-  badges: number;       // Badge count → level
-  gas: number;          // Gas spent → level
-  profit: number;       // P&L performance → level
-  tokens: number;       // Token diversity → level
+  // Row 1
+  attack: number;       // Trading volume
+  hitpoints: number;    // Wallet score
+  mining: number;       // ETH received
+  // Row 2
+  strength: number;     // Transaction count
+  agility: number;      // Tx per active day
+  smithing: number;     // Gas spent
+  // Row 3
+  defence: number;      // Wallet age
+  herblore: number;     // Token diversity
+  fishing: number;      // NFT count
+  // Row 4
+  ranged: number;       // Contracts interacted
+  thieving: number;     // Internal tx count
+  cooking: number;      // Active days
+  // Row 5
+  prayer: number;       // Badge count
+  crafting: number;     // Xeet cards
+  firemaking: number;   // ETH sent volume
+  // Row 6
+  magic: number;        // P&L performance
+  fletching: number;    // Favorite apps
+  woodcutting: number;  // NFT holdings value
+  // Row 7
+  runecraft: number;    // Balance
+  slayer: number;       // Percentile rank
+  farming: number;      // Days since first tx
+  // Row 8
+  construction: number; // Profile completeness
+  hunter: number;       // Unique collections
+  sailing: number;      // Total level bonus
 }
 
 function calculateSkillLevels(data: WalletData): WalletSkills {
@@ -22,17 +45,43 @@ function calculateSkillLevels(data: WalletData): WalletSkills {
   const volumeUsd = parseFloat(data.tradingVolumeUsd?.replace(/[^0-9.]/g, '') || '0');
   const txPerDay = data.activeDays > 0 ? data.transactionCount / data.activeDays : 0;
   const profitRatio = data.ethReceived > 0 ? (data.ethReceived - data.ethSent) / data.ethReceived : 0;
+  const balanceUsd = parseFloat(data.balanceUsd?.replace(/[^0-9.]/g, '') || '0');
+  const ethReceivedUsd = parseFloat(data.ethReceivedUsd?.replace(/[^0-9.]/g, '') || '0');
+  const ethSentUsd = parseFloat(data.ethSentUsd?.replace(/[^0-9.]/g, '') || '0');
 
   return {
-    trading: Math.min(99, Math.max(1, Math.floor(Math.log10(volumeUsd + 1) * 15))),
-    collecting: Math.min(99, Math.max(1, Math.floor(Math.log10(data.nftCount + 1) * 25))),
-    exploring: Math.min(99, Math.max(1, Math.floor(data.contractsInteracted * 1.5))),
-    holding: Math.min(99, Math.max(1, Math.floor((data.walletAgeDays || 0) / 4))),
-    speed: Math.min(99, Math.max(1, Math.floor(txPerDay * 5))),
-    badges: Math.min(99, Math.max(1, (data.abstractBadgeCount || 0) * 4)),
-    gas: Math.min(99, Math.max(1, Math.floor(parseFloat(data.totalGasUsedUsd?.replace(/[^0-9.]/g, '') || '0') / 2))),
-    profit: Math.min(99, Math.max(1, Math.floor(50 + profitRatio * 49))),
-    tokens: Math.min(99, Math.max(1, data.tokenCount * 3)),
+    // Row 1
+    attack: Math.min(99, Math.max(1, Math.floor(Math.log10(volumeUsd + 1) * 15))),
+    hitpoints: Math.min(99, Math.max(1, data.walletScore || 10)),
+    mining: Math.min(99, Math.max(1, Math.floor(Math.log10(ethReceivedUsd + 1) * 12))),
+    // Row 2
+    strength: Math.min(99, Math.max(1, Math.floor(Math.log10(data.transactionCount + 1) * 20))),
+    agility: Math.min(99, Math.max(1, Math.floor(txPerDay * 5))),
+    smithing: Math.min(99, Math.max(1, Math.floor(parseFloat(data.totalGasUsedUsd?.replace(/[^0-9.]/g, '') || '0') / 2))),
+    // Row 3
+    defence: Math.min(99, Math.max(1, Math.floor((data.walletAgeDays || 0) / 4))),
+    herblore: Math.min(99, Math.max(1, data.tokenCount * 3)),
+    fishing: Math.min(99, Math.max(1, Math.floor(Math.log10(data.nftCount + 1) * 25))),
+    // Row 4
+    ranged: Math.min(99, Math.max(1, Math.floor(data.contractsInteracted * 1.5))),
+    thieving: Math.min(99, Math.max(1, Math.floor(data.transactionCount / 50))),
+    cooking: Math.min(99, Math.max(1, Math.floor(data.activeDays / 2))),
+    // Row 5
+    prayer: Math.min(99, Math.max(1, (data.abstractBadgeCount || 0) * 4)),
+    crafting: Math.min(99, Math.max(1, (data.xeetCardCount || 0) * 5)),
+    firemaking: Math.min(99, Math.max(1, Math.floor(Math.log10(ethSentUsd + 1) * 12))),
+    // Row 6
+    magic: Math.min(99, Math.max(1, Math.floor(50 + profitRatio * 49))),
+    fletching: Math.min(99, Math.max(1, (data.favoriteApps?.length || 0) * 15)),
+    woodcutting: Math.min(99, Math.max(1, Math.floor(Math.log10((data.nftHoldings?.length || 0) * 100 + 1) * 15))),
+    // Row 7
+    runecraft: Math.min(99, Math.max(1, Math.floor(Math.log10(balanceUsd + 1) * 20))),
+    slayer: Math.min(99, Math.max(1, Math.floor((100 - (data.walletPercentile || 50)) * 0.99))),
+    farming: Math.min(99, Math.max(1, Math.floor((data.walletAgeDays || 0) / 5))),
+    // Row 8
+    construction: Math.min(99, Math.max(1, Math.floor(((data.abstractBadgeCount || 0) + (data.xeetCardCount || 0) + (data.nftCount > 0 ? 10 : 0)) * 2))),
+    hunter: Math.min(99, Math.max(1, Math.floor((data.nftHoldings?.length || 0) * 8))),
+    sailing: Math.min(99, Math.max(1, Math.floor(data.walletScore * 0.8))),
   };
 }
 
@@ -42,15 +91,38 @@ function getTotalLevel(skills: WalletSkills): number {
 
 // Skill icons (emoji-based for simplicity, can replace with custom icons)
 const SKILL_CONFIG: { key: keyof WalletSkills; name: string; icon: string; color: string }[] = [
-  { key: 'trading', name: 'Trading', icon: '📈', color: '#f1c40f' },
-  { key: 'collecting', name: 'Collecting', icon: '🎨', color: '#9b59b6' },
-  { key: 'exploring', name: 'Exploring', icon: '🧭', color: '#3498db' },
-  { key: 'holding', name: 'Holding', icon: '💎', color: '#1abc9c' },
-  { key: 'speed', name: 'Speed', icon: '⚡', color: '#e74c3c' },
-  { key: 'badges', name: 'Badges', icon: '🏅', color: '#2edb84' },
-  { key: 'gas', name: 'Gas', icon: '⛽', color: '#e67e22' },
-  { key: 'profit', name: 'Profit', icon: '💰', color: '#27ae60' },
-  { key: 'tokens', name: 'Tokens', icon: '🪙', color: '#f39c12' },
+  // Row 1
+  { key: 'attack', name: 'Attack', icon: '⚔️', color: '#f1c40f' },
+  { key: 'hitpoints', name: 'Hitpoints', icon: '❤️', color: '#e74c3c' },
+  { key: 'mining', name: 'Mining', icon: '⛏️', color: '#3498db' },
+  // Row 2
+  { key: 'strength', name: 'Strength', icon: '💪', color: '#1abc9c' },
+  { key: 'agility', name: 'Agility', icon: '🏃', color: '#9b59b6' },
+  { key: 'smithing', name: 'Smithing', icon: '🔨', color: '#e67e22' },
+  // Row 3
+  { key: 'defence', name: 'Defence', icon: '🛡️', color: '#2edb84' },
+  { key: 'herblore', name: 'Herblore', icon: '🌿', color: '#27ae60' },
+  { key: 'fishing', name: 'Fishing', icon: '🐟', color: '#3498db' },
+  // Row 4
+  { key: 'ranged', name: 'Ranged', icon: '🏹', color: '#27ae60' },
+  { key: 'prayer', name: 'Prayer', icon: '🙏', color: '#f1c40f' },
+  { key: 'cooking', name: 'Cooking', icon: '🍳', color: '#e67e22' },
+  // Row 5
+  { key: 'magic', name: 'Magic', icon: '✨', color: '#9b59b6' },
+  { key: 'crafting', name: 'Crafting', icon: '💎', color: '#3498db' },
+  { key: 'firemaking', name: 'Firemaking', icon: '🔥', color: '#e74c3c' },
+  // Row 6
+  { key: 'runecraft', name: 'Runecraft', icon: '🔮', color: '#9b59b6' },
+  { key: 'fletching', name: 'Fletching', icon: '🏹', color: '#1abc9c' },
+  { key: 'woodcutting', name: 'Woodcutting', icon: '🪓', color: '#27ae60' },
+  // Row 7
+  { key: 'slayer', name: 'Slayer', icon: '💀', color: '#2c3e50' },
+  { key: 'construction', name: 'Construction', icon: '🏠', color: '#e67e22' },
+  { key: 'farming', name: 'Farming', icon: '🌾', color: '#27ae60' },
+  // Row 8
+  { key: 'construction', name: 'Construction', icon: '🏠', color: '#e67e22' },
+  { key: 'hunter', name: 'Hunter', icon: '🦊', color: '#e67e22' },
+  { key: 'sailing', name: 'Sailing', icon: '⛵', color: '#3498db' },
 ];
 
 interface FavoriteApp {
@@ -93,6 +165,39 @@ interface Personality {
   description: string;
 }
 
+interface AbstractPortalData {
+  user: {
+    id: string;
+    name: string;
+    description: string;
+    walletAddress: string;
+    tier: number;
+    tierV2: number;
+    hasStreamingAccess: boolean;
+    overrideProfilePictureUrl?: string;
+    badges: {
+      badge: {
+        id: number;
+        type: string;
+        name: string;
+        icon: string;
+        description: string;
+      };
+      claimed: boolean;
+    }[];
+  };
+}
+
+const TIER_CONFIG: { [key: number]: { name: string; color: string; gradient: string; xp: number } } = {
+  1: { name: 'Bronze', color: '#cd7f32', gradient: 'linear-gradient(135deg, #cd7f32, #8b4513)', xp: 0 },
+  2: { name: 'Silver', color: '#c0c0c0', gradient: 'linear-gradient(135deg, #c0c0c0, #808080)', xp: 10000 },
+  3: { name: 'Gold', color: '#ffd700', gradient: 'linear-gradient(135deg, #ffd700, #b8860b)', xp: 110000 },
+  4: { name: 'Platinum', color: '#e5e4e2', gradient: 'linear-gradient(135deg, #e5e4e2, #a0b2c6)', xp: 1110000 },
+  5: { name: 'Diamond', color: '#b9f2ff', gradient: 'linear-gradient(135deg, #b9f2ff, #4fc3f7)', xp: 4110000 },
+  6: { name: 'Obsidian', color: '#3d3d3d', gradient: 'linear-gradient(135deg, #3d3d3d, #1a1a2e, #4a0080)', xp: 9110000 },
+  7: { name: 'Ethereal', color: '#e040fb', gradient: 'linear-gradient(135deg, #e040fb, #7c4dff, #18ffff)', xp: 17110000 },
+};
+
 interface WalletData {
   address: string;
   balance: string;
@@ -132,91 +237,102 @@ interface WalletData {
   error?: string;
 }
 
-// Authentic OSRS-style skill tile component
-function SkillTile({ skill, level }: { skill: typeof SKILL_CONFIG[0]; level: number }) {
-  return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      width: 62,
-      height: 26,
-      background: '#3e3529',
-      borderTop: '1px solid #4a4035',
-      borderLeft: '1px solid #4a4035',
-      borderRight: '1px solid #201c17',
-      borderBottom: '1px solid #201c17',
-      padding: '0 4px',
-      cursor: 'pointer',
-    }}
-    title={`${skill.name}: Level ${level}`}
-    >
-      <span style={{ fontSize: '1rem', lineHeight: 1 }}>{skill.icon}</span>
-      <span style={{
-        fontSize: '0.8rem',
-        fontWeight: 400,
-        color: level >= 99 ? '#00ff00' : '#ffff00',
-        textShadow: '1px 1px 0 #000',
-        fontFamily: 'monospace',
-      }}>
-        {level}
-      </span>
-    </div>
-  );
-}
+// OSRS Skills panel using the authentic template image
+// Skill positions mapped to the OSRS template
+// Image is 502x678, we scale to ~50% for display (251x339)
+const SCALE = 0.5;
+const IMG_WIDTH = 502 * SCALE;
+const IMG_HEIGHT = 678 * SCALE;
 
-// Authentic OSRS Skills panel component
+// Skill positions at 50% scale - OSRS authentic layout
+const SKILL_POSITIONS: { key: keyof WalletSkills; x: number; y: number }[] = [
+  // Row 1: Attack, Hitpoints, Mining
+  { key: 'attack', x: 68, y: 45 },
+  { key: 'hitpoints', x: 131, y: 43 },
+  { key: 'mining', x: 195, y: 45 },
+  // Row 2: Strength, Agility, Smithing
+  { key: 'strength', x: 68, y: 74 },
+  { key: 'agility', x: 131, y: 74 },
+  { key: 'smithing', x: 195, y: 74 },
+  // Row 3: Defence, Herblore, Fishing
+  { key: 'defence', x: 68, y: 104 },
+  { key: 'herblore', x: 131, y: 105 },
+  { key: 'fishing', x: 195, y: 104 },
+  // Row 4: Ranged, Thieving, Cooking
+  { key: 'ranged', x: 68, y: 136 },
+  { key: 'thieving', x: 131, y: 134 },
+  { key: 'cooking', x: 195, y: 136 },
+  // Row 5: Prayer, Crafting, Firemaking
+  { key: 'prayer', x: 68, y: 167 },
+  { key: 'crafting', x: 131, y: 167 },
+  { key: 'firemaking', x: 195, y: 167 },
+  // Row 6: Magic, Fletching, Woodcutting
+  { key: 'magic', x: 68, y: 197 },
+  { key: 'fletching', x: 131, y: 194 },
+  { key: 'woodcutting', x: 195, y: 194 },
+  // Row 7: Runecraft, Slayer, Farming
+  { key: 'runecraft', x: 68, y: 226 },
+  { key: 'slayer', x: 131, y: 224 },
+  { key: 'farming', x: 195, y: 224 },
+  // Row 8: Construction, Hunter, Sailing
+  { key: 'construction', x: 68, y: 257 },
+  { key: 'hunter', x: 131, y: 257 },
+  { key: 'sailing', x: 195, y: 254 },
+];
+
 function SkillsPanel({ skills }: { skills: WalletSkills }) {
   const totalLevel = getTotalLevel(skills);
 
   return (
     <div style={{
-      background: '#3e3529',
-      border: '2px solid #474034',
-      borderRadius: 0,
-      padding: 0,
-      width: 'fit-content',
-      boxShadow: 'inset 1px 1px 0 #4a4035, inset -1px -1px 0 #201c17',
+      position: 'relative',
+      width: IMG_WIDTH,
+      height: IMG_HEIGHT,
+      backgroundImage: 'url(/rsskills.png)',
+      backgroundSize: `${IMG_WIDTH}px ${IMG_HEIGHT}px`,
+      backgroundRepeat: 'no-repeat',
     }}>
-      {/* Outer frame - darker border */}
-      <div style={{
-        background: '#252116',
-        padding: 2,
-      }}>
-        {/* Inner content area */}
-        <div style={{
-          background: '#3e3529',
-          border: '1px solid #4a4035',
-        }}>
-          {/* Skills Grid - 3 columns */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: 0,
-          }}>
-            {SKILL_CONFIG.map((skill) => (
-              <SkillTile key={skill.key} skill={skill} level={skills[skill.key]} />
-            ))}
-          </div>
-
-          {/* Total Level Bar */}
-          <div style={{
-            background: '#2d2820',
-            borderTop: '1px solid #201c17',
-            padding: '4px 8px',
-            textAlign: 'center',
-          }}>
-            <span style={{
-              fontSize: '0.75rem',
-              color: '#ff981f',
-              fontFamily: 'monospace',
+      {/* Skill levels overlay */}
+      {SKILL_POSITIONS.map(({ key, x, y }) => {
+        const level = skills[key];
+        return (
+          <span
+            key={key}
+            title={`${SKILL_CONFIG.find(s => s.key === key)?.name}: Level ${level}`}
+            style={{
+              position: 'absolute',
+              left: x,
+              top: y,
+              width: '20px',
+              fontSize: '14px',
+              fontWeight: 700,
+              color: level >= 99 ? '#00ff00' : '#ffff00',
               textShadow: '1px 1px 0 #000',
-            }}>
-              Total level: <span style={{ color: '#ffff00' }}>{totalLevel}</span>
-            </span>
-          </div>
-        </div>
-      </div>
+              fontFamily: 'Arial, sans-serif',
+              textAlign: 'center',
+              cursor: 'default',
+            }}
+          >
+            {level}
+          </span>
+        );
+      })}
+
+      {/* Total level overlay */}
+      <span
+        style={{
+          position: 'absolute',
+          right: 65,
+          bottom: 38,
+          fontSize: '12.5px',
+          fontWeight: 700,
+          color: '#ffff00',
+          textShadow: '1px 1px 0 #000',
+          fontFamily: 'Arial, sans-serif',
+        }}
+      >
+        {totalLevel}
+      </span>
     </div>
   );
 }
@@ -228,11 +344,11 @@ const CACHED_DEMO_DATA: WalletData = {
   balance: "527414148986414",
   balanceFormatted: "0.0005 ETH",
   balanceUsd: "$1.04",
-  transactionCount: 2000,
+  transactionCount: 4523,
   firstTxDate: "2025-01-28",
-  lastTxDate: "2026-02-12",
-  walletAgeDays: 379,
-  activeDays: 39,
+  lastTxDate: "2026-02-14",
+  walletAgeDays: 382,
+  activeDays: 156,
   contractsInteracted: 47,
   tokenCount: 21,
   nftCount: 105,
@@ -279,7 +395,13 @@ const CACHED_DEMO_DATA: WalletData = {
   abstractBadgeCount: 19,
   xeetCards: [],
   xeetCardCount: 0,
-  nftHoldings: [],
+  nftHoldings: [
+    { contractAddress: '0x1', tokenId: '1', name: 'Hamieverse Genesis #123', collectionName: 'Hamieverse Genesis', count: 3, estimatedValueUsd: 1125, image: 'https://i.seadn.io/gcs/files/a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6.png' },
+    { contractAddress: '0x2', tokenId: '2', name: 'Gigaverse ROM #456', collectionName: 'Gigaverse ROMs', count: 2, estimatedValueUsd: 400, image: 'https://i.seadn.io/gcs/files/b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7.png' },
+    { contractAddress: '0x3', tokenId: '3', name: 'FinalBosu #789', collectionName: 'FinalBosu', count: 1, estimatedValueUsd: 625, image: 'https://i.seadn.io/gcs/files/c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8.png' },
+    { contractAddress: '0x4', tokenId: '4', name: 'Glowbud #012', collectionName: 'Glowbuds', count: 5, estimatedValueUsd: 250, image: 'https://i.seadn.io/gcs/files/d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8g9.png' },
+    { contractAddress: '0x5', tokenId: '5', name: 'Bearish #345', collectionName: 'Bearish', count: 2, estimatedValueUsd: 250, image: 'https://i.seadn.io/gcs/files/e5f6a7b8c9d0e1f2a3b4c5d6e7f8g9h0.png' },
+  ],
   walletScore: 82,
   walletRank: "A",
   walletPercentile: 3,
@@ -289,64 +411,82 @@ const CACHED_DEMO_DATA: WalletData = {
 
 const WALLET_CACHE_KEY = 'wallet-analytics-cache';
 
+// Loading progress stages configuration
+const LOADING_STAGES = [
+  { id: 'fetch', label: 'Fetching wallet data...', range: [0, 20] },
+  { id: 'analyze', label: 'Analyzing transactions...', range: [20, 50] },
+  { id: 'scores', label: 'Calculating scores...', range: [50, 70] },
+  { id: 'nfts', label: 'Loading NFT data...', range: [70, 90] },
+  { id: 'finalize', label: 'Finalizing...', range: [90, 100] },
+] as const;
+
+function LoadingProgress({ progress }: { progress: number }) {
+  const currentStageIndex = LOADING_STAGES.findIndex(
+    (stage) => progress >= stage.range[0] && progress < stage.range[1]
+  );
+  const activeStage = currentStageIndex >= 0 ? LOADING_STAGES[currentStageIndex] : LOADING_STAGES[LOADING_STAGES.length - 1];
+
+  return (
+    <div className="loading-progress">
+      <div className="loading-progress-info">
+        <div className="loading-progress-percentage">{Math.round(progress)}%</div>
+        <div className="loading-progress-stage">{activeStage.label}</div>
+      </div>
+
+      <div className="loading-progress-bar-container">
+        <div
+          className="loading-progress-bar"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+
+      <div className="loading-progress-stages">
+        {LOADING_STAGES.map((stage, index) => {
+          const isCompleted = progress >= stage.range[1];
+          const isActive = progress >= stage.range[0] && progress < stage.range[1];
+          const isPending = progress < stage.range[0];
+
+          return (
+            <div
+              key={stage.id}
+              className={`loading-stage-item ${isCompleted ? 'completed' : ''} ${isActive ? 'active' : ''} ${isPending ? 'pending' : ''}`}
+            >
+              <span className={`loading-stage-icon ${isCompleted ? 'completed' : ''} ${isActive ? 'active' : ''} ${isPending ? 'pending' : ''}`}>
+                {isCompleted ? '\u2713' : isActive ? '\u25CF' : '\u25CB'}
+              </span>
+              <span className="loading-stage-text">{stage.label}</span>
+              <span className="loading-stage-percent">{stage.range[1]}%</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// Helper to mask a value with X's, keeping same character count
+const maskValue = (value: string): string => {
+  // Remove $ and get just the number part
+  const numPart = value.replace(/[$,]/g, '');
+  const xCount = numPart.length;
+  return '$' + 'X'.repeat(xCount);
+};
+
 export default function WalletAnalyticsPage() {
   const [address, setAddress] = useState(DEMO_WALLET_ADDRESS);
   const [loading, setLoading] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [walletData, setWalletData] = useState<WalletData | null>(CACHED_DEMO_DATA);
+  const [portalData, setPortalData] = useState<AbstractPortalData | null>(null);
+  const [pnlHidden, setPnlHidden] = useState(false);
 
-  // Load wallet data on mount - fetch fresh data
+  // Fetch portal data for initial demo wallet (quick request)
   useEffect(() => {
-    let shouldFetch = true;
-    let addressToFetch = DEMO_WALLET_ADDRESS;
-
-    try {
-      const cached = localStorage.getItem(WALLET_CACHE_KEY);
-      if (cached) {
-        const { address: cachedAddr, data, timestamp } = JSON.parse(cached);
-        // Use cached data if it's less than 5 minutes old
-        if (data && Date.now() - timestamp < 5 * 60 * 1000) {
-          setAddress(cachedAddr);
-          setWalletData(data);
-          shouldFetch = false;
-        } else if (cachedAddr) {
-          // Cache expired, but use the same address
-          addressToFetch = cachedAddr;
-        }
-      }
-    } catch {
-      // Ignore cache errors
-    }
-
-    // Fetch fresh data on mount (cached data may have stale xeetCards)
-    if (shouldFetch) {
-      // Inline fetch to avoid dependency issues
-      (async () => {
-        setLoading(true);
-        try {
-          const response = await fetch(`/api/wallet-analytics?address=${encodeURIComponent(addressToFetch)}`);
-          const data = await response.json();
-          if (response.ok) {
-            setWalletData(data);
-            setAddress(addressToFetch);
-            // Cache the result
-            try {
-              localStorage.setItem(WALLET_CACHE_KEY, JSON.stringify({
-                address: addressToFetch,
-                data,
-                timestamp: Date.now(),
-              }));
-            } catch {
-              // Ignore storage errors
-            }
-          }
-        } catch {
-          // Use fallback cached demo data on error
-        } finally {
-          setLoading(false);
-        }
-      })();
-    }
+    fetch(`https://backend.portal.abs.xyz/api/user/address/${DEMO_WALLET_ADDRESS}`)
+      .then(res => res.ok ? res.json() : null)
+      .then(data => setPortalData(data))
+      .catch(() => setPortalData(null));
   }, []);
 
   const handleAnalyze = async (walletAddress?: string) => {
@@ -357,17 +497,48 @@ export default function WalletAnalyticsPage() {
     }
 
     setLoading(true);
+    setLoadingProgress(0);
     setError(null);
     setWalletData(null);
+    setPortalData(null);
+
+    // Fetch Abstract Portal data in parallel (for official tier)
+    fetch(`https://backend.portal.abs.xyz/api/user/address/${addr.trim()}`)
+      .then(res => res.ok ? res.json() : null)
+      .then(data => setPortalData(data))
+      .catch(() => setPortalData(null));
+
+    // Simulate progress stages while fetching
+    const progressInterval = setInterval(() => {
+      setLoadingProgress((prev) => {
+        // Progress slowly through stages, cap at 85% until actual data arrives
+        if (prev < 20) return prev + 2;
+        if (prev < 45) return prev + 1.5;
+        if (prev < 65) return prev + 1;
+        if (prev < 85) return prev + 0.5;
+        return prev; // Hold at 85% until data arrives
+      });
+    }, 100);
 
     try {
       const response = await fetch(`/api/wallet-analytics?address=${encodeURIComponent(addr.trim())}`);
       const data = await response.json();
 
+      clearInterval(progressInterval);
+
       if (!response.ok) {
+        setLoadingProgress(0);
         setError(data.error || 'Failed to fetch wallet data');
         return;
       }
+
+      // Quick progress to 100% when data arrives
+      setLoadingProgress(90);
+      await new Promise(resolve => setTimeout(resolve, 200));
+      setLoadingProgress(95);
+      await new Promise(resolve => setTimeout(resolve, 150));
+      setLoadingProgress(100);
+      await new Promise(resolve => setTimeout(resolve, 200));
 
       setWalletData(data);
 
@@ -382,9 +553,12 @@ export default function WalletAnalyticsPage() {
         // Ignore storage errors
       }
     } catch (err) {
+      clearInterval(progressInterval);
+      setLoadingProgress(0);
       setError('Failed to connect to Abstract network');
     } finally {
       setLoading(false);
+      setLoadingProgress(0);
     }
   };
 
@@ -447,9 +621,65 @@ export default function WalletAnalyticsPage() {
         )}
       </div>
 
+      {/* Loading Progress */}
+      {loading && (
+        <div className="card" style={{ marginBottom: '1.5rem' }}>
+          <LoadingProgress progress={loadingProgress} />
+        </div>
+      )}
+
       {/* Results */}
-      {walletData && (
+      {walletData && !loading && (
         <>
+          {/* Official Abstract Tier */}
+          {portalData?.user && (
+            <div className="card" style={{ marginBottom: '1.5rem', padding: '1.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  {portalData.user.overrideProfilePictureUrl && (
+                    <img
+                      src={portalData.user.overrideProfilePictureUrl}
+                      alt={portalData.user.name}
+                      style={{ width: 56, height: 56, borderRadius: '12px', border: `2px solid ${TIER_CONFIG[portalData.user.tier]?.color || '#888'}` }}
+                    />
+                  )}
+                  <div>
+                    <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff' }}>{portalData.user.name}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)' }}>{portalData.user.description}</div>
+                  </div>
+                </div>
+                <div style={{
+                  padding: '0.75rem 1.5rem',
+                  background: TIER_CONFIG[portalData.user.tier]?.gradient || 'linear-gradient(135deg, #888, #666)',
+                  borderRadius: '12px',
+                  boxShadow: `0 4px 20px ${TIER_CONFIG[portalData.user.tier]?.color || '#888'}40`,
+                  textAlign: 'center',
+                }}>
+                  <div style={{ fontSize: '0.6rem', color: 'rgba(0,0,0,0.6)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.2rem' }}>Abstract Tier</div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#000' }}>
+                    {TIER_CONFIG[portalData.user.tier]?.name || `Tier ${portalData.user.tier}`} {((portalData.user.tierV2 - 1) % 3) + 1}
+                  </div>
+                </div>
+              </div>
+              {portalData.user.hasStreamingAccess && (
+                <div style={{
+                  marginTop: '0.75rem',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  padding: '0.3rem 0.6rem',
+                  background: 'rgba(139, 92, 246, 0.15)',
+                  border: '1px solid rgba(139, 92, 246, 0.3)',
+                  borderRadius: '6px',
+                  fontSize: '0.7rem',
+                  color: '#a78bfa',
+                }}>
+                  <span>📡</span> Streaming Access
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Combined Score, Personality & P&L Card */}
           <div className="card" style={{ marginBottom: '1.5rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
@@ -503,19 +733,46 @@ export default function WalletAnalyticsPage() {
 
               {/* Right: P&L */}
               <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.5)', marginBottom: '0.25rem' }}>Net P&L</div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                  <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.5)' }}>Net P&L</span>
+                  <button
+                    onClick={() => setPnlHidden(!pnlHidden)}
+                    style={{
+                      width: '32px',
+                      height: '16px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      background: pnlHidden ? 'rgba(255,255,255,0.2)' : 'rgba(46, 219, 132, 0.4)',
+                      cursor: 'pointer',
+                      position: 'relative',
+                      transition: 'background 0.2s',
+                    }}
+                    title={pnlHidden ? 'Show P&L' : 'Hide P&L'}
+                  >
+                    <div style={{
+                      position: 'absolute',
+                      top: '2px',
+                      left: pnlHidden ? '2px' : '16px',
+                      width: '12px',
+                      height: '12px',
+                      borderRadius: '50%',
+                      background: '#fff',
+                      transition: 'left 0.2s',
+                    }} />
+                  </button>
+                </div>
                 <div style={{
                   fontSize: '1.75rem',
                   fontWeight: 700,
                   color: walletData.isProfitable ? '#2edb84' : '#e74c3c',
                   textShadow: walletData.isProfitable ? '0 0 15px rgba(46, 219, 132, 0.3)' : '0 0 15px rgba(231, 76, 60, 0.3)',
                 }}>
-                  {walletData.netPnlUsd}
+                  {pnlHidden ? maskValue(walletData.netPnlUsd) : walletData.netPnlUsd}
                 </div>
                 <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)', marginTop: '0.25rem' }}>
-                  <span style={{ color: '#2edb84' }}>{walletData.ethReceivedUsd}</span>
+                  <span style={{ color: '#2edb84' }}>{pnlHidden ? maskValue(walletData.ethReceivedUsd) : walletData.ethReceivedUsd}</span>
                   <span style={{ margin: '0 0.3rem' }}>→</span>
-                  <span style={{ color: '#e74c3c' }}>{walletData.ethSentUsd}</span>
+                  <span style={{ color: '#e74c3c' }}>{pnlHidden ? maskValue(walletData.ethSentUsd) : walletData.ethSentUsd}</span>
                 </div>
               </div>
             </div>
@@ -746,14 +1003,24 @@ export default function WalletAnalyticsPage() {
               <h4 style={{ margin: '0 0 1rem 0', fontSize: '1rem', color: '#2edb84', textAlign: 'center' }}>Portfolio Estimate</h4>
 
             {(() => {
-              // Estimate portfolio values
+              // Calculate portfolio values from actual data
               const ethValue = parseFloat(walletData.balanceUsd?.replace(/[^0-9.]/g, '') || '0');
-              const nftEstValue = walletData.nftCount * 15; // ~$15 avg floor estimate for Abstract NFTs
-              const totalValue = ethValue + nftEstValue;
+
+              // Sum actual NFT values from holdings, fallback to $5 avg for NFTs without floor data
+              const nftEstValue = walletData.nftHoldings?.reduce((sum, nft) => {
+                return sum + (nft.estimatedValueUsd || (nft.count * 5));
+              }, 0) || 0;
+
+              // Add value for NFTs not in holdings (badges, xeet cards, etc)
+              const holdingsNftCount = walletData.nftHoldings?.reduce((sum, nft) => sum + nft.count, 0) || 0;
+              const otherNftsValue = Math.max(0, walletData.nftCount - holdingsNftCount) * 3; // $3 avg for badges/misc
+
+              const totalNftValue = nftEstValue + otherNftsValue;
+              const totalValue = ethValue + totalNftValue;
 
               const portfolioData = [
                 { name: 'ETH', value: ethValue, color: '#627eea', percent: totalValue > 0 ? (ethValue / totalValue * 100).toFixed(1) : '0' },
-                { name: 'NFTs', value: nftEstValue, color: '#00cccc', percent: totalValue > 0 ? (nftEstValue / totalValue * 100).toFixed(1) : '0' },
+                { name: 'NFTs', value: totalNftValue, color: '#00cccc', percent: totalValue > 0 ? (totalNftValue / totalValue * 100).toFixed(1) : '0' },
               ];
 
               return (
@@ -905,19 +1172,19 @@ export default function WalletAnalyticsPage() {
               <div className="wallet-pnl-grid">
                 <div>
                   <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.5)', marginBottom: '0.25rem' }}>Total Received</div>
-                  <div style={{ fontSize: '1rem', fontWeight: 600, color: '#2edb84' }}>{walletData.ethReceivedUsd}</div>
+                  <div style={{ fontSize: '1rem', fontWeight: 600, color: '#2edb84' }}>{pnlHidden ? maskValue(walletData.ethReceivedUsd) : walletData.ethReceivedUsd}</div>
                 </div>
                 <div>
                   <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.5)', marginBottom: '0.25rem' }}>Total Sent</div>
-                  <div style={{ fontSize: '1rem', fontWeight: 600, color: '#e74c3c' }}>{walletData.ethSentUsd}</div>
+                  <div style={{ fontSize: '1rem', fontWeight: 600, color: '#e74c3c' }}>{pnlHidden ? maskValue(walletData.ethSentUsd) : walletData.ethSentUsd}</div>
                 </div>
                 <div>
                   <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.5)', marginBottom: '0.25rem' }}>Gas Spent</div>
-                  <div style={{ fontSize: '1rem', fontWeight: 600, color: '#f39c12' }}>{walletData.totalGasUsedUsd}</div>
+                  <div style={{ fontSize: '1rem', fontWeight: 600, color: '#f39c12' }}>{pnlHidden ? maskValue(walletData.totalGasUsedUsd) : walletData.totalGasUsedUsd}</div>
                 </div>
                 <div>
                   <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.5)', marginBottom: '0.25rem' }}>Net P&L</div>
-                  <div style={{ fontSize: '1rem', fontWeight: 700, color: walletData.isProfitable ? '#2edb84' : '#e74c3c' }}>{walletData.netPnlUsd}</div>
+                  <div style={{ fontSize: '1rem', fontWeight: 700, color: walletData.isProfitable ? '#2edb84' : '#e74c3c' }}>{pnlHidden ? maskValue(walletData.netPnlUsd) : walletData.netPnlUsd}</div>
                 </div>
               </div>
             </div>

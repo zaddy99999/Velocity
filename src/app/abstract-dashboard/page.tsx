@@ -1,7 +1,96 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import NavBar from '@/components/NavBar';
+
+// 3D Animated Tier Card Component
+interface TierCardProps {
+  name: string;
+  count: number;
+  pct: string;
+  className: string;
+}
+
+function TierCard({ name, count, pct, className }: TierCardProps) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [rotate, setRotate] = useState({ x: 0, y: 0 });
+  const [glint, setGlint] = useState({ x: 50, y: 50 });
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+
+    const x = (e.clientY - rect.top) / rect.height;
+    const y = (e.clientX - rect.left) / rect.width;
+    const multiplier = 15;
+
+    setRotate({
+      x: (x - 0.5) * multiplier * -1,
+      y: (y - 0.5) * multiplier
+    });
+
+    setGlint({ x: y * 100, y: x * 100 });
+  };
+
+  const handleMouseLeave = () => {
+    setRotate({ x: 0, y: 0 });
+    setGlint({ x: 50, y: 50 });
+  };
+
+  return (
+    <div className="tier-card-wrapper">
+      <div
+        ref={cardRef}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+        className={`tier-card ${className}`}
+        style={{
+          transform: `rotateX(${rotate.x}deg) rotateY(${rotate.y}deg)`,
+        }}
+      >
+        <div
+          className="tier-card-glint"
+          style={{
+            background: `radial-gradient(circle at ${glint.x}% ${glint.y}%, white 0%, transparent 60%)`
+          }}
+        />
+        <div className="tier-card-content">
+          <div className="tier-card-header">
+            <div>
+              <span className="tier-card-label">{name} Tier</span>
+              <div className="tier-card-divider" />
+            </div>
+            <img
+              src="/AbsLogoWhite.png"
+              alt="Abstract"
+              style={{
+                width: '28px',
+                height: '28px',
+                opacity: className === 'obsidian' ? 0.7 : 0.4,
+                filter: className === 'obsidian' ? 'none' : 'invert(1) brightness(0.3)',
+              }}
+            />
+          </div>
+          <div>
+            <p className="tier-card-count">
+              {count.toLocaleString()}
+            </p>
+            <div className="tier-card-footer">
+              <div>
+                <span className="tier-card-meta-label">Percentage</span>
+                <span className="tier-card-meta-value">{pct}%</span>
+              </div>
+              <div className="tier-card-logo">
+                <div className="tier-card-logo-circle" />
+                <div className="tier-card-logo-circle" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 interface NFTCollection {
   name: string;
@@ -705,6 +794,68 @@ export default function AbstractDashboardPage() {
             </div>
           </div>
           <NavBar />
+        </div>
+      </div>
+
+      {/* Tier Stats - 3D Credit Card Style */}
+      <div style={{ marginBottom: '1.5rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <div>
+            <h2 style={{ fontSize: '1rem', fontWeight: 700, color: '#2edb84', margin: 0 }}>Abstract Portal Users</h2>
+            <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)' }}>1,996,392 Total</span>
+          </div>
+          {/* Wallet Download Dropdown */}
+          <div style={{ position: 'relative' }}>
+            <select
+              onChange={(e) => {
+                if (e.target.value) {
+                  window.open(e.target.value, '_blank');
+                  e.target.value = '';
+                }
+              }}
+              style={{
+                background: 'rgba(46, 219, 132, 0.1)',
+                border: '1px solid rgba(46, 219, 132, 0.3)',
+                borderRadius: '8px',
+                padding: '0.5rem 2rem 0.5rem 0.75rem',
+                color: '#2edb84',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                appearance: 'none',
+                WebkitAppearance: 'none',
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%232edb84' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'right 0.5rem center',
+              }}
+              defaultValue=""
+            >
+              <option value="" disabled>Download Wallets</option>
+              <option value="https://docs.google.com/spreadsheets/d/1nqhvjN318kdAnj2C1tbK97t3rQBCowJZhFosfzPrnso/edit#gid=310783987">Gold (16,566)</option>
+              <option value="https://docs.google.com/spreadsheets/d/1nqhvjN318kdAnj2C1tbK97t3rQBCowJZhFosfzPrnso/edit#gid=282885419">Platinum (1,332)</option>
+              <option value="https://docs.google.com/spreadsheets/d/1nqhvjN318kdAnj2C1tbK97t3rQBCowJZhFosfzPrnso/edit#gid=428215115">Diamond (103)</option>
+              <option value="https://docs.google.com/spreadsheets/d/1nqhvjN318kdAnj2C1tbK97t3rQBCowJZhFosfzPrnso/edit#gid=243590580">Obsidian (11)</option>
+            </select>
+          </div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
+          {[
+            { name: 'Bronze', count: 1797598, pct: '90.04', className: 'bronze' },
+            { name: 'Silver', count: 180782, pct: '9.06', className: 'silver' },
+            { name: 'Gold', count: 16566, pct: '0.83', className: 'gold' },
+            { name: 'Platinum', count: 1332, pct: '0.07', className: 'platinum' },
+            { name: 'Diamond', count: 103, pct: '0.01', className: 'diamond' },
+            { name: 'Obsidian', count: 11, pct: '0.00', className: 'obsidian' },
+          ].map((tier) => (
+            <TierCard
+              key={tier.name}
+              name={tier.name}
+              count={tier.count}
+              pct={tier.pct}
+              className={tier.className}
+            />
+          ))}
+
         </div>
       </div>
 
