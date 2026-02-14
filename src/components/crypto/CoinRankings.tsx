@@ -34,16 +34,16 @@ export default function CoinRankings({ coins, isLoading, lastUpdated }: CoinRank
   const [period, setPeriod] = useState<TimePeriod>('24h');
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const sortedCoins = [...coins].sort((a, b) => {
+  const sortedCoins = [...(coins || [])].sort((a, b) => {
     switch (sortBy) {
       case 'price':
-        return b.current_price - a.current_price;
+        return (b.current_price ?? 0) - (a.current_price ?? 0);
       case 'change':
         return getPriceChange(b, period) - getPriceChange(a, period);
       case 'mcap':
-        return b.market_cap - a.market_cap;
+        return (b.market_cap ?? 0) - (a.market_cap ?? 0);
       default:
-        return a.market_cap_rank - b.market_cap_rank;
+        return (a.market_cap_rank ?? 9999) - (b.market_cap_rank ?? 9999);
     }
   });
 

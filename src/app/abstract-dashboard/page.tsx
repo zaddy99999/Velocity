@@ -513,7 +513,7 @@ function NFTHeatmap({ collections, scaleType = 'balanced' }: { collections: NFTC
                           fontFamily="system-ui, -apple-system, sans-serif"
                           style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}
                         >
-                          Floor: {collection.floorPrice.toFixed(4)} ETH
+                          Floor: {(collection.floorPrice ?? 0).toFixed(4)} ETH
                         </text>
                       )}
                     </>
@@ -760,6 +760,9 @@ export default function AbstractDashboardPage() {
   const fetchData = async () => {
     try {
       const response = await fetch('/api/abstract-stats');
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
       const data = await response.json();
       setNfts(data.nfts || []);
       setTokens(data.tokens || []);
@@ -888,8 +891,8 @@ export default function AbstractDashboardPage() {
             </span>
             <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#2edb84' }}>
               {activeTab === 'nfts'
-                ? `$${(nfts.reduce((sum, n) => sum + n.marketCap, 0) / 1000000).toFixed(2)}M`
-                : `$${(tokens.reduce((sum, t) => sum + t.marketCap, 0) / 1000000).toFixed(2)}M`
+                ? `$${(nfts.reduce((sum, n) => sum + (n.marketCap ?? 0), 0) / 1000000).toFixed(2)}M`
+                : `$${(tokens.reduce((sum, t) => sum + (t.marketCap ?? 0), 0) / 1000000).toFixed(2)}M`
               }
             </div>
           </div>
@@ -1126,7 +1129,7 @@ export default function AbstractDashboardPage() {
                       {(nft.floorPrice ?? 0) > 0 ? `${(nft.floorPrice ?? 0).toFixed(3)}` : '-'}
                     </td>
                     <td style={{ padding: '0.5rem 0.25rem', fontSize: '0.75rem', textAlign: 'right' }}>
-                      {nft.marketCap >= 1000000 ? `$${(nft.marketCap / 1000000).toFixed(1)}M` : nft.marketCap >= 1000 ? `$${(nft.marketCap / 1000).toFixed(0)}K` : '-'}
+                      {(nft.marketCap ?? 0) >= 1000000 ? `$${((nft.marketCap ?? 0) / 1000000).toFixed(1)}M` : (nft.marketCap ?? 0) >= 1000 ? `$${((nft.marketCap ?? 0) / 1000).toFixed(0)}K` : '-'}
                     </td>
                   </tr>
                 ))}

@@ -251,13 +251,16 @@ function HomeContent() {
   const fetchStatus = useCallback(async () => {
     try {
       const response = await fetch('/api/status');
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
       const data: StatusResponse = await response.json();
 
       if (data.error) {
         setError(data.error);
       } else {
         if (JSON.stringify(data.channels) !== JSON.stringify(prevChannelsRef.current)) {
-          prevChannelsRef.current = channels;
+          prevChannelsRef.current = data.channels;
           setDataUpdated(true);
           setTimeout(() => setDataUpdated(false), 1000);
         }
@@ -274,7 +277,7 @@ function HomeContent() {
     } finally {
       setLoading(false);
     }
-  }, [channels]);
+  }, []);
 
   useEffect(() => {
     fetchStatus();
