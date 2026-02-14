@@ -651,21 +651,20 @@ function TokenHeatmap({ tokens, scaleType = 'balanced' }: { tokens: Token[]; sca
                     y={tileY}
                     width={tileW}
                     height={tileH}
-                    fill={hasImage ? '#1a1a2e' : `url(#${gradientId})`}
+                    fill={hasImage ? '#000' : `url(#${gradientId})`}
                     rx={8}
                     style={{ cursor: 'pointer' }}
                   />
-                  {/* Background image if available */}
+                  {/* Background image if available - centered and smaller */}
                   {hasImage && (
                     <image
                       href={token.image}
-                      x={tileX}
-                      y={tileY}
-                      width={tileW}
-                      height={tileH}
-                      clipPath={`url(#token-tile-${index})`}
-                      preserveAspectRatio="xMidYMid slice"
-                      style={{ cursor: 'pointer' }}
+                      x={tileX + tileW * 0.2}
+                      y={tileY + tileH * 0.1}
+                      width={tileW * 0.6}
+                      height={tileH * 0.5}
+                      preserveAspectRatio="xMidYMid meet"
+                      style={{ cursor: 'pointer', opacity: 0.9 }}
                     />
                   )}
                   {/* Light overlay for text readability */}
