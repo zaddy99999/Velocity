@@ -733,6 +733,8 @@ interface EliteWallet {
   tierV2: number;
   badges: number;
   streaming: boolean;
+  pfp?: string;
+  txs?: number;
 }
 
 export default function AbstractDashboardPage() {
@@ -798,7 +800,7 @@ export default function AbstractDashboardPage() {
     }
   };
 
-  // Fetch elite wallets
+  // Fetch elite wallets (pfps are embedded in API response)
   useEffect(() => {
     const fetchEliteWallets = async () => {
       try {
@@ -919,24 +921,25 @@ export default function AbstractDashboardPage() {
             )}
           </div>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
+        {/* Row 1: Bronze, Silver, Gold */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.25rem', marginBottom: '1.25rem' }}>
           {[
             { name: 'Bronze', count: 1797598, pct: '90.04', className: 'bronze' },
             { name: 'Silver', count: 180782, pct: '9.06', className: 'silver' },
             { name: 'Gold', count: 16566, pct: '0.83', className: 'gold' },
+          ].map((tier) => (
+            <TierCard key={tier.name} name={tier.name} count={tier.count} pct={tier.pct} className={tier.className} />
+          ))}
+        </div>
+        {/* Row 2: Platinum, Diamond, Obsidian */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.25rem' }}>
+          {[
             { name: 'Platinum', count: 1332, pct: '0.07', className: 'platinum' },
             { name: 'Diamond', count: 103, pct: '0.01', className: 'diamond' },
             { name: 'Obsidian', count: 11, pct: '0.00', className: 'obsidian' },
           ].map((tier) => (
-            <TierCard
-              key={tier.name}
-              name={tier.name}
-              count={tier.count}
-              pct={tier.pct}
-              className={tier.className}
-            />
+            <TierCard key={tier.name} name={tier.name} count={tier.count} pct={tier.pct} className={tier.className} />
           ))}
-
         </div>
 
       </div>
@@ -1281,24 +1284,31 @@ export default function AbstractDashboardPage() {
         </div>
       </div>
 
-      {/* Elite Wallets Leaderboard - Combined */}
+      {/* Top Wallets Leaderboard - Half Width */}
       <div style={{
         marginTop: '1.5rem',
         background: '#000',
         borderRadius: '12px',
         border: '1px solid rgba(46, 219, 132, 0.2)',
         padding: '1rem',
+        width: '50%',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
           <h2 style={{ fontSize: '1rem', fontWeight: 700, color: '#2edb84', margin: 0 }}>
-            Elite Portal Users
+            Top Wallets
           </h2>
           <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)' }}>
             {eliteWallets.obsidian.length + eliteWallets.diamond.length} members
           </span>
         </div>
         <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
-          {[...eliteWallets.obsidian.map(w => ({ ...w, tierName: 'Obsidian' })), ...eliteWallets.diamond.map(w => ({ ...w, tierName: 'Diamond' }))].map((wallet, index) => (
+          {[...eliteWallets.obsidian.map(w => ({ ...w, tierName: 'Obsidian' })), ...eliteWallets.diamond.map(w => ({ ...w, tierName: 'Diamond' }))].map((wallet, index) => {
+            const subTier = ((wallet.tierV2 - 1) % 3) + 1;
+            // Truncate long wallet address names
+            const displayName = wallet.name.startsWith('0x') && wallet.name.length > 20
+              ? `${wallet.name.slice(0, 6)}...${wallet.name.slice(-4)}`
+              : wallet.name;
+            return (
             <a
               key={wallet.id}
               href={`https://portal.abs.xyz/profile/${wallet.wallet}`}
@@ -1321,14 +1331,19 @@ export default function AbstractDashboardPage() {
                 {index + 1}
               </span>
               <img
-                src={`https://api.dicebear.com/7.x/identicon/svg?seed=${wallet.wallet}`}
+                src={wallet.pfp || `https://api.dicebear.com/7.x/identicon/svg?seed=${wallet.wallet}`}
                 alt=""
-                style={{ width: 36, height: 36, borderRadius: '50%', background: '#1a1a2e' }}
+                style={{ width: 36, height: 36, borderRadius: '50%', background: '#1a1a2e', objectFit: 'cover' }}
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.onerror = null;
+                  target.src = `https://api.dicebear.com/7.x/identicon/svg?seed=${wallet.wallet}`;
+                }}
               />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {wallet.name}
+                    {displayName}
                   </span>
                   <span style={{
                     fontSize: '0.6rem',
@@ -1338,7 +1353,7 @@ export default function AbstractDashboardPage() {
                     background: wallet.tierName === 'Obsidian' ? 'linear-gradient(135deg, #1a1a2e, #3a3a5a)' : 'linear-gradient(135deg, #b9f2ff, #e0f7ff)',
                     color: wallet.tierName === 'Obsidian' ? '#a0a0c0' : '#1a1a2e',
                   }}>
-                    {wallet.tierName}
+                    {wallet.tierName} {subTier}
                   </span>
                 </div>
                 <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', fontFamily: 'monospace' }}>
@@ -1346,18 +1361,11 @@ export default function AbstractDashboardPage() {
                 </div>
               </div>
               <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#2edb84' }}>{wallet.badges}</div>
-                <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)' }}>badges</div>
-              </div>
-              <div style={{ width: '60px', textAlign: 'center' }}>
-                {wallet.streaming ? (
-                  <span style={{ fontSize: '0.7rem', color: '#2edb84', fontWeight: 500 }}>Streaming</span>
-                ) : (
-                  <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.3)' }}>-</span>
-                )}
+                <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#2edb84' }}>{wallet.txs ? wallet.txs.toLocaleString() : '-'}</div>
+                <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)' }}>txns</div>
               </div>
             </a>
-          ))}
+          );})}
         </div>
       </div>
 
