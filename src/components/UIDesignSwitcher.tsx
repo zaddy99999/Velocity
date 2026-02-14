@@ -9,27 +9,15 @@ interface UIDesign {
 }
 
 const uiDesigns: UIDesign[] = [
-  { id: 0, name: 'Default (Original)', file: '' },
-  { id: 1, name: 'Neon Cyberpunk', file: 'design-01-neon-cyberpunk.css' },
+  { id: 0, name: 'Default', file: '' },
+  { id: 1, name: 'Neon Cyber', file: 'design-01-neon-cyberpunk.css' },
   { id: 2, name: 'Minimal Mono', file: 'design-02-minimal-mono.css' },
-  { id: 3, name: 'Retro Synthwave', file: 'design-03-retro-synthwave.css' },
-  { id: 4, name: 'Nature Organic', file: 'design-04-nature-organic.css' },
-  { id: 5, name: 'Glassmorphism', file: 'design-05-glassmorphism.css' },
+  { id: 3, name: 'Retro Synth', file: 'design-03-retro-synthwave.css' },
   { id: 6, name: 'Brutalist', file: 'design-06-brutalist.css' },
+  { id: 8, name: 'Hacker', file: 'design-08-terminal-hacker.css' },
   { id: 7, name: 'Vaporwave', file: 'design-07-vaporwave.css' },
-  { id: 8, name: 'Terminal Hacker', file: 'design-08-terminal-hacker.css' },
-  { id: 9, name: 'Candy Playful', file: 'design-09-candy-playful.css' },
-  { id: 10, name: 'Steampunk', file: 'design-10-steampunk.css' },
-  { id: 11, name: 'Arctic Ice', file: 'design-11-arctic-ice.css' },
-  { id: 12, name: 'Sunset Warm', file: 'design-12-sunset-warm.css' },
   { id: 13, name: 'Cosmic Space', file: 'design-13-cosmic-space.css' },
-  { id: 14, name: 'Forest Natural', file: 'design-14-forest-natural.css' },
-  { id: 15, name: 'Ocean Aquatic', file: 'design-15-ocean-aquatic.css' },
-  { id: 16, name: 'Noir Film', file: 'design-16-noir-film.css' },
-  { id: 17, name: 'Graffiti Urban', file: 'design-17-graffiti-urban.css' },
-  { id: 18, name: 'Japanese Zen', file: 'design-18-japanese-zen.css' },
   { id: 19, name: 'Holographic Future', file: 'design-19-holographic-future.css' },
-  { id: 20, name: 'Corporate Pro', file: 'design-20-corporate-pro.css' },
 ];
 
 export default function UIDesignSwitcher() {
@@ -42,7 +30,8 @@ export default function UIDesignSwitcher() {
     const saved = localStorage.getItem('zaddytools-ui-design');
     if (saved) {
       const savedId = parseInt(saved);
-      if (!isNaN(savedId) && savedId >= 0 && savedId <= 20) {
+      const validIds = uiDesigns.map(d => d.id);
+      if (!isNaN(savedId) && validIds.includes(savedId)) {
         setCurrentDesign(savedId);
         loadDesign(savedId);
       }
@@ -86,13 +75,15 @@ export default function UIDesignSwitcher() {
   };
 
   const nextDesign = () => {
-    const next = (currentDesign + 1) % uiDesigns.length;
-    selectDesign(next);
+    const currentIndex = uiDesigns.findIndex(d => d.id === currentDesign);
+    const nextIndex = (currentIndex + 1) % uiDesigns.length;
+    selectDesign(uiDesigns[nextIndex].id);
   };
 
   const prevDesign = () => {
-    const prev = currentDesign === 0 ? uiDesigns.length - 1 : currentDesign - 1;
-    selectDesign(prev);
+    const currentIndex = uiDesigns.findIndex(d => d.id === currentDesign);
+    const prevIndex = currentIndex === 0 ? uiDesigns.length - 1 : currentIndex - 1;
+    selectDesign(uiDesigns[prevIndex].id);
   };
 
   return (
@@ -104,25 +95,34 @@ export default function UIDesignSwitcher() {
           position: 'fixed',
           bottom: '80px',
           left: '20px',
-          width: '50px',
-          height: '50px',
-          borderRadius: '50%',
-          background: '#2edb84',
-          border: 'none',
+          width: '44px',
+          height: '44px',
+          borderRadius: '12px',
+          background: 'rgba(46, 219, 132, 0.15)',
+          border: '1px solid rgba(46, 219, 132, 0.4)',
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: '24px',
-          boxShadow: '0 4px 20px rgba(46, 219, 132, 0.4)',
+          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)',
           zIndex: 9999,
-          transition: 'transform 0.2s',
+          transition: 'all 0.2s',
+          backdropFilter: 'blur(8px)',
         }}
-        onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
-        onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-        title="UI Design Switcher"
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'scale(1.05)';
+          e.currentTarget.style.background = 'rgba(46, 219, 132, 0.25)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'scale(1)';
+          e.currentTarget.style.background = 'rgba(46, 219, 132, 0.15)';
+        }}
+        title="Theme"
       >
-        🎨
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2edb84" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+        </svg>
       </button>
 
       {/* Panel */}
@@ -202,10 +202,10 @@ export default function UIDesignSwitcher() {
             </button>
             <div style={{ flex: 1, textAlign: 'center' }}>
               <div style={{ fontSize: '11px', color: '#888', marginBottom: '2px' }}>
-                {currentDesign} / {uiDesigns.length - 1}
+                {uiDesigns.findIndex(d => d.id === currentDesign) + 1} / {uiDesigns.length}
               </div>
               <div style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>
-                {uiDesigns[currentDesign].name}
+                {uiDesigns.find(d => d.id === currentDesign)?.name || 'Default'}
               </div>
             </div>
             <button
