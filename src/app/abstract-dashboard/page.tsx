@@ -725,6 +725,16 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 type ScaleType = 'equal' | 'balanced' | 'proportional';
 
+interface EliteWallet {
+  id: string;
+  wallet: string;
+  name: string;
+  tier: number;
+  tierV2: number;
+  badges: number;
+  streaming: boolean;
+}
+
 export default function AbstractDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [nfts, setNfts] = useState<NFTCollection[]>([]);
@@ -734,6 +744,8 @@ export default function AbstractDashboardPage() {
   const [scaleType, setScaleType] = useState<ScaleType>('balanced');
   const [lastUpdated, setLastUpdated] = useState<string>('');
   const [walletDropdownOpen, setWalletDropdownOpen] = useState(false);
+  const [eliteWallets, setEliteWallets] = useState<{ obsidian: EliteWallet[], diamond: EliteWallet[] }>({ obsidian: [], diamond: [] });
+  const [eliteTab, setEliteTab] = useState<'obsidian' | 'diamond'>('obsidian');
 
   useEffect(() => {
     // Try to load cached data first for instant display
@@ -785,6 +797,24 @@ export default function AbstractDashboardPage() {
       setLoading(false);
     }
   };
+
+  // Fetch elite wallets
+  useEffect(() => {
+    const fetchEliteWallets = async () => {
+      try {
+        const [obsidianRes, diamondRes] = await Promise.all([
+          fetch('/data/wallets-obsidian.json'),
+          fetch('/data/wallets-diamond.json'),
+        ]);
+        const obsidian = await obsidianRes.json();
+        const diamond = await diamondRes.json();
+        setEliteWallets({ obsidian, diamond });
+      } catch (err) {
+        console.error('Error fetching elite wallets:', err);
+      }
+    };
+    fetchEliteWallets();
+  }, []);
 
   return (
     <ErrorBoundary>
@@ -911,6 +941,84 @@ export default function AbstractDashboardPage() {
             />
           ))}
 
+        </div>
+
+        {/* Elite Wallets Module */}
+        <div className="card" style={{ marginTop: '1.25rem', padding: '1rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#2edb84', margin: 0 }}>Elite Wallets</h3>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button
+                onClick={() => setEliteTab('obsidian')}
+                style={{
+                  padding: '0.4rem 0.8rem',
+                  borderRadius: '6px',
+                  border: 'none',
+                  background: eliteTab === 'obsidian' ? 'linear-gradient(135deg, #1a1a2e, #2d2d44)' : 'rgba(255,255,255,0.05)',
+                  color: eliteTab === 'obsidian' ? '#fff' : 'rgba(255,255,255,0.5)',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  boxShadow: eliteTab === 'obsidian' ? '0 0 10px rgba(100,100,120,0.3)' : 'none',
+                }}
+              >
+                Obsidian ({eliteWallets.obsidian.length})
+              </button>
+              <button
+                onClick={() => setEliteTab('diamond')}
+                style={{
+                  padding: '0.4rem 0.8rem',
+                  borderRadius: '6px',
+                  border: 'none',
+                  background: eliteTab === 'diamond' ? 'linear-gradient(135deg, #b9f2ff, #e0f7ff)' : 'rgba(255,255,255,0.05)',
+                  color: eliteTab === 'diamond' ? '#1a1a2e' : 'rgba(255,255,255,0.5)',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  boxShadow: eliteTab === 'diamond' ? '0 0 10px rgba(185,242,255,0.3)' : 'none',
+                }}
+              >
+                Diamond ({eliteWallets.diamond.length})
+              </button>
+            </div>
+          </div>
+          <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                  <th style={{ padding: '0.5rem', textAlign: 'left', color: 'rgba(255,255,255,0.5)', fontWeight: 500 }}>Name</th>
+                  <th style={{ padding: '0.5rem', textAlign: 'left', color: 'rgba(255,255,255,0.5)', fontWeight: 500 }}>Wallet</th>
+                  <th style={{ padding: '0.5rem', textAlign: 'center', color: 'rgba(255,255,255,0.5)', fontWeight: 500 }}>Badges</th>
+                  <th style={{ padding: '0.5rem', textAlign: 'center', color: 'rgba(255,255,255,0.5)', fontWeight: 500 }}>Streaming</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(eliteTab === 'obsidian' ? eliteWallets.obsidian : eliteWallets.diamond).map((wallet) => (
+                  <tr key={wallet.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                    <td style={{ padding: '0.5rem', color: '#fff', fontWeight: 500 }}>{wallet.name}</td>
+                    <td style={{ padding: '0.5rem' }}>
+                      <a
+                        href={`https://abscan.org/address/${wallet.wallet}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ color: '#2edb84', textDecoration: 'none', fontFamily: 'monospace', fontSize: '0.7rem' }}
+                      >
+                        {wallet.wallet.slice(0, 6)}...{wallet.wallet.slice(-4)}
+                      </a>
+                    </td>
+                    <td style={{ padding: '0.5rem', textAlign: 'center', color: 'rgba(255,255,255,0.7)' }}>{wallet.badges}</td>
+                    <td style={{ padding: '0.5rem', textAlign: 'center' }}>
+                      {wallet.streaming ? (
+                        <span style={{ color: '#2edb84' }}>Yes</span>
+                      ) : (
+                        <span style={{ color: 'rgba(255,255,255,0.3)' }}>No</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
